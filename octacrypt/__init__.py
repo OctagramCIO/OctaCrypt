@@ -1,0 +1,4 @@
+"""
+OctaCrypt
+Core package initialization.
+"""
