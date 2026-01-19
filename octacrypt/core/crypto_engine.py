@@ -1,16 +1,25 @@
-# octacrypt/core/crypto_engine.py
-
 from octacrypt.algorithms.aes_cipher import AESCipher
+from octacrypt.algorithms.xor import XORCipher
+
 
 class CryptoEngine:
-    def __init__(self, algorithm="AES"):
-        if algorithm == "AES":
-            self.cipher = AESCipher()
-        else:
-            raise ValueError("Algoritmo no soportado")
+    SUPPORTED_ALGORITHMS = {
+        "AES": AESCipher,
+        "xor": XORCipher,
+    }
 
-    def encrypt(self, plaintext: str) -> dict:
+    def __init__(self, algorithm: str, key: bytes):
+        if not key:
+            raise ValueError("Key cannot be empty")
+
+        if algorithm not in self.SUPPORTED_ALGORITHMS:
+            raise ValueError(f"Unsupported algorithm: {algorithm}")
+
+        cipher_class = self.SUPPORTED_ALGORITHMS[algorithm]
+        self.cipher = cipher_class(key)
+
+    def encrypt(self, plaintext: bytes) -> bytes:
         return self.cipher.encrypt(plaintext)
 
-    def decrypt(self, encrypted_data: dict) -> str:
-        return self.cipher.decrypt(encrypted_data)
+    def decrypt(self, ciphertext: bytes) -> bytes:
+        return self.cipher.decrypt(ciphertext)
