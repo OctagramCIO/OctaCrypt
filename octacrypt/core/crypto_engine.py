@@ -38,3 +38,4 @@ class CryptoEngine:
             raise TypeError("Data must be bytes")
 
         return self.cipher.decrypt(data)
+)
