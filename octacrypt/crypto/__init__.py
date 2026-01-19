@@ -1,3 +1,0 @@
-"""
-En fase de prueba
-"""
