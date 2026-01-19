@@ -13,4 +13,3 @@ def test_basic_encrypt_decrypt():
 
     assert encrypted != original
     assert decrypted == original
-
