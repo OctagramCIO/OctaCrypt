@@ -3,7 +3,7 @@ from octacrypt.core.crypto_engine import CryptoEngine
 
 def test_basic_encrypt_decrypt():
     engine = CryptoEngine(
-        algorithm="AES",
+        algorithm="XOR",
         key=b"octagram"
     )
 
