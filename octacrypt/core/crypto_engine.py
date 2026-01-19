@@ -1,25 +1,42 @@
-from octacrypt.algorithms.aes_cipher import AESCipher
+# octacrypt/core/crypto_engine.py
+
 from octacrypt.algorithms.xor import XORCipher
+from octacrypt.algorithms.aes_cipher import AESCipher
 
 
 class CryptoEngine:
-    SUPPORTED_ALGORITHMS = {
-        "AES": AESCipher,
+    """
+    Central cryptographic engine for OctaCrypt.
+    """
+
+    _ALGORITHMS = {
         "xor": XORCipher,
+        "aes": AESCipher,
     }
 
     def __init__(self, algorithm: str, key: bytes):
-        if not key:
-            raise ValueError("Key cannot be empty")
+        if not isinstance(algorithm, str):
+            raise TypeError("Algorithm must be a string")
 
-        if algorithm not in self.SUPPORTED_ALGORITHMS:
+        algorithm = algorithm.lower()
+
+        if algorithm not in self._ALGORITHMS:
             raise ValueError(f"Unsupported algorithm: {algorithm}")
 
-        cipher_class = self.SUPPORTED_ALGORITHMS[algorithm]
-        self.cipher = cipher_class(key)
+        if not isinstance(key, (bytes, bytearray)):
+            raise TypeError("Key must be bytes")
 
-    def encrypt(self, plaintext: bytes) -> bytes:
-        return self.cipher.encrypt(plaintext)
+        self.algorithm_name = algorithm
+        self.cipher = self._ALGORITHMS[algorithm](key)
 
-    def decrypt(self, ciphertext: bytes) -> bytes:
-        return self.cipher.decrypt(ciphertext)
+    def encrypt(self, data: bytes) -> bytes:
+        if not isinstance(data, (bytes, bytearray)):
+            raise TypeError("Data must be bytes")
+
+        return self.cipher.encrypt(data)
+
+    def decrypt(self, data: bytes) -> bytes:
+        if not isinstance(data, (bytes, bytearray)):
+            raise TypeError("Data must be bytes")
+
+        return self.cipher.decrypt(data)
