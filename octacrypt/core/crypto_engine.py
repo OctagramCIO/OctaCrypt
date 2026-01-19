@@ -1,7 +1,6 @@
 # octacrypt/core/crypto_engine.py
 
 from octacrypt.algorithms.xor import XORCipher
-from octacrypt.algorithms.aes_cipher import AESCipher
 
 
 class CryptoEngine:
@@ -11,7 +10,6 @@ class CryptoEngine:
 
     _ALGORITHMS = {
         "xor": XORCipher,
-        "aes": AESCipher,
     }
 
     def __init__(self, algorithm: str, key: bytes):
@@ -40,3 +38,4 @@ class CryptoEngine:
             raise TypeError("Data must be bytes")
 
         return self.cipher.decrypt(data)
+)
