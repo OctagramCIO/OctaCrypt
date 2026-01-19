@@ -1,9 +1,16 @@
 from octacrypt.core.crypto_engine import CryptoEngine
 
-engine = CryptoEngine()
 
-data = engine.encrypt("Octagram vive")
-print("Cifrado:", data)
+def test_basic_encrypt_decrypt():
+    engine = CryptoEngine(
+        algorithm="AES",
+        key=b"octagram"
+    )
 
-original = engine.decrypt(data)
-print("Descifrado:", original)
+    original = b"Octagram vive"
+    encrypted = engine.encrypt(original)
+    decrypted = engine.decrypt(encrypted)
+
+    assert encrypted != original
+    assert decrypted == original
+
