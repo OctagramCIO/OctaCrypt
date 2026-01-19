@@ -1,3 +1,6 @@
+from octacrypt.core.crypto_engine import CryptoEngine
+
+
 def test_encrypt_empty_data():
     engine = CryptoEngine(
         algorithm="xor",
