@@ -4,13 +4,21 @@ from pathlib import Path
 from octacrypt.core.crypto_engine import CryptoEngine
 
 
-def encrypt_file(input_path: Path, output_path: str | Path | None, key: str):
-    engine = CryptoEngine(
-        algorithm="xor",
-        key=key.encode()
-    )
-
+def encrypt_file(
+    input_path: Path,
+    output_path: str | Path | None,
+    key: str,
+    algorithm: str = "xor"
+):
+    """
+    Encrypt a file using the specified algorithm.
+    """
     input_path = Path(input_path)
+
+    engine = CryptoEngine(
+        algorithm=algorithm,
+        key=key
+    )
 
     if output_path is None:
         output_path = input_path.with_suffix(input_path.suffix + ".enc")
@@ -24,13 +32,21 @@ def encrypt_file(input_path: Path, output_path: str | Path | None, key: str):
     return output_path
 
 
-def decrypt_file(input_path: Path, output_path: str | Path | None, key: str):
-    engine = CryptoEngine(
-        algorithm="xor",
-        key=key.encode()
-    )
-
+def decrypt_file(
+    input_path: Path,
+    output_path: str | Path | None,
+    key: str,
+    algorithm: str = "xor"
+):
+    """
+    Decrypt a file using the specified algorithm.
+    """
     input_path = Path(input_path)
+
+    engine = CryptoEngine(
+        algorithm=algorithm,
+        key=key
+    )
 
     if output_path is None:
         output_path = input_path.with_suffix("")
