@@ -18,12 +18,24 @@ def build_parser():
     enc.add_argument("input", help="Input file")
     enc.add_argument("--key", required=True, help="Encryption key")
     enc.add_argument("--out", help="Output file")
+    enc.add_argument(
+        "--alg",
+        default="xor",
+        choices=["xor", "aes"],
+        help="Encryption algorithm (default: xor)"
+    )
 
     # decrypt
     dec = subparsers.add_parser("decrypt", help="Decrypt a file")
     dec.add_argument("input", help="Encrypted file")
     dec.add_argument("--key", required=True, help="Decryption key")
     dec.add_argument("--out", help="Output file")
+    dec.add_argument(
+        "--alg",
+        default="xor",
+        choices=["xor", "aes"],
+        help="Decryption algorithm (default: xor)"
+    )
 
     return parser
 
@@ -40,20 +52,36 @@ def main():
 
     try:
         if args.command == "encrypt":
-            output = args.out or f"{input_path}.enc"
-            encrypt_file(input_path, output, args.key)
+            output = Path(args.out) if args.out else input_path.with_suffix(
+                input_path.suffix + ".enc"
+            )
+
+            encrypt_file(
+                input_path=input_path,
+                key=args.key,
+                output_path=output,
+                algorithm=args.alg
+            )
 
             print("[✔] Archivo cifrado correctamente")
             print(f"    → Entrada : {input_path}")
             print(f"    → Salida  : {output}")
+            print(f"    → Alg     : {args.alg}")
 
         elif args.command == "decrypt":
-            output = args.out or str(input_path).replace(".enc", "")
-            decrypt_file(input_path, output, args.key)
+            output = Path(args.out) if args.out else input_path.with_suffix("")
+
+            decrypt_file(
+                input_path=input_path,
+                key=args.key,
+                output_path=output,
+                algorithm=args.alg
+            )
 
             print("[✔] Archivo descifrado correctamente")
             print(f"    → Entrada : {input_path}")
             print(f"    → Salida  : {output}")
+            print(f"    → Alg     : {args.alg}")
 
     except Exception as e:
         print(f"[✖] Error: {e}")
