@@ -1,5 +1,3 @@
-# tests/test_crypto_engine.py
-
 from octacrypt.core.crypto_engine import CryptoEngine
 
 
