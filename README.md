@@ -1,45 +1,66 @@
-# 🔐 OctaCrypt
+🔐 OctaCrypt
 
-**OctaCrypt** is an open-source cryptographic CLI toolkit developed by **Octagram**, focused on secure file encryption, clean architecture, and responsible key handling.
+OctaCrypt is an open-source cryptographic command-line (CLI) toolkit developed by Octagram, focused on secure file encryption, clean architecture, and responsible key handling.
 
-OctaCrypt follows a clear philosophy: **security through transparency**. All cryptographic mechanisms are explicit, auditable, and modular. The project prioritizes correctness, clarity, and extensibility over obscurity.
+The project follows a clear philosophy: security through transparency.
+All cryptographic operations are explicit, auditable, and modular. OctaCrypt prioritizes correctness, clarity, and extensibility over obscurity or convenience.
 
-> ⚠️ OctaCrypt is currently in early development. Do **not** use pre-release versions in production environments.
+⚠️ Project status: Early development
+Do NOT use pre-release versions in production environments.
 
 ---
 
 ## 🧭 Project Philosophy
 
-> "True security is not achieved by hiding systems, but by allowing them to be examined — and still remain strong."
+"True security is not achieved by hiding systems, but by allowing them to be examined — and still remain strong."
 
-OctaCrypt is built on these principles:
+OctaCrypt is built on the following principles:
 
-* 🔍 **Auditability** – Open-source, readable, and testable code
-* 🔐 **Explicit Cryptography** – No hidden behavior or opaque flows
-* 🧠 **Simplicity** – Minimal, understandable design
-* 🌍 **Privacy First** – No telemetry, tracking, or data collection
-* 🛡️ **Ethical Security** – Built to protect users, not to exploit them
+🔍 Auditability – Open-source, readable, and testable code
+
+🔐 Explicit Cryptography – No hidden behavior or opaque processes
+
+🧠 Simplicity – Minimal and understandable design
+
+🌍 Privacy First – No telemetry, tracking, or data collection
+
+🛡️ Ethical Security – Built to protect users, not to exploit them
 
 ---
 
 ## ✨ Features
 
-### Current (v0.1)
+**Current (v0.1)**
 
-* File encryption and decryption
-* Modular cryptographic engine
-* Command-line interface (CLI)
-* Algorithm abstraction layer
-* Automated test coverage
+File encryption and decryption
 
-### Planned
+Modular cryptographic engine
 
-* AES encryption
-* Key derivation (KDF)
-* Integrity verification (HMAC / AEAD)
-* Message encryption
-* Digital signatures
-* Global CLI entry point
+Command-line interface (CLI)
+
+Algorithm abstraction layer
+
+Basic input validation and error handling
+
+Automated test coverage (in progress)
+
+
+**PLANED**
+
+AES encryption (secure default)
+
+Key derivation functions (KDF)
+
+Integrity verification (HMAC / AEAD)
+
+Message encryption
+
+Digital signatures
+
+Global CLI entry point (octacrypt)
+
+**⚠️ Note:**
+The current XOR algorithm is implemented for educational and structural purposes only and must NOT be used for real-world security.
 
 ---
 
@@ -47,7 +68,6 @@ OctaCrypt is built on these principles:
 
 OctaCrypt is designed as a **modular toolkit**, allowing each component to be reviewed, tested, and extended independently.
 
-```
 OctaCrypt/
 ├── octacrypt/
 │   ├── algorithms/   # Cryptographic algorithms (XOR, future AES)
@@ -56,8 +76,7 @@ OctaCrypt/
 │   └── __init__.py
 ├── tests/            # Automated tests
 ├── README.md
-└── pyproject.toml / setup.cfg (future)
-```
+└── pyproject.toml    # Packaging configuration (planned)
 
 ---
 
@@ -65,50 +84,49 @@ OctaCrypt/
 
 Clone the repository:
 
-```bash
 git clone https://github.com/Octagram/OctaCrypt.git
 cd OctaCrypt
-```
 
 Ensure you are using **Python 3.10+**.
 
 ### Encrypt a file
 
-```bash
 python -m octacrypt.cli encrypt file.txt --key mysecret --alg xor
-```
 
 ### Decrypt a file
 
-```bash
 python -m octacrypt.cli decrypt file.txt.enc --key mysecret --alg xor
-```
 
 ---
 
 ## ⚠️ Security Notice
 
-OctaCrypt is under active development.
+OctaCrypt is under active development and has not been independently audited.
 
-* ❌ Do **NOT** use in production
-* 🔎 Always review cryptographic configurations
-* 📢 Report vulnerabilities responsibly
+❌ Do NOT use in production environments
 
-If you discover a security issue, **do not open a public issue**. Please contact the Octagram team directly.
+🔎 Always review cryptographic configurations and code
+
+📢 Report vulnerabilities responsibly
+
+If you discover a security issue, do not open a public issue.
+Please contact the Octagram team directly through official channels.
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome.
+Contributions are welcome and encouraged.
 
 Guidelines:
 
-* Follow secure coding practices
-* Write clear and descriptive commit messages
-* Add tests when applicable
+Follow secure coding practices
 
-A full CONTRIBUTING guide will be added in a future release.
+Write clear and descriptive commit messages
+
+Add tests when applicable
+
+A full CONTRIBUTING.md guide will be added in a future release.
 
 ---
 
@@ -120,10 +138,12 @@ This project is licensed under the **MIT License**.
 
 ## 🔺 About Octagram
 
-**Octagram** is an international community focused on cybersecurity, privacy, and ethical technology.
+Octagram is an international community focused on cybersecurity, privacy, and ethical technology.
 
 OctaCrypt is one of its core open-source initiatives.
 
 ---
 
-> Built with responsibility. Audited by transparency. Protected by ethics.
+Built with responsibility.
+Audited by transparency.
+Protected by ethics.
