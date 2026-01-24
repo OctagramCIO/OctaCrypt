@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "octacrypt"
+version = "0.1.0"
+description = "Cryptographic CLI toolkit by Octagram"
+authors = [{ name = "Octagram" }]
+requires-python = ">=3.10"
+dependencies = [
+    "cryptography",
+    "click"
+]
+
+[project.scripts]
+octacrypt = "octacrypt.cli:main"
