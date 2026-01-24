@@ -1,4 +1,5 @@
 import click
+
 from .encrypt import encrypt
 from .decrypt import decrypt
 from .hash import hash
