@@ -4,3 +4,6 @@ import click
 def cli():
     """OctaCrypt CLI"""
     pass
+
+if __name__ == "__main__":
+    cli()
