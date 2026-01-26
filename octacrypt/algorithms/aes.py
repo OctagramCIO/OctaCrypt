@@ -3,23 +3,18 @@ import os
 
 
 class AESAlgorithm:
-    NONCE_SIZE = 12  # recomendado para GCM
-
     def __init__(self, key: bytes):
-        if not isinstance(key, bytes):
-            raise TypeError("Key must be bytes")
+        if len(key) not in (16, 24, 32):
+            raise ValueError("AES key must be 128, 192, or 256 bits")
 
-        if len(key) != 32:
-            raise ValueError("AES key must be 32 bytes (AES-256)")
-
-        self.aes = AESGCM(key)
+        self.aesgcm = AESGCM(key)
 
     def encrypt(self, data: bytes) -> bytes:
-        nonce = os.urandom(self.NONCE_SIZE)
-        ciphertext = self.aes.encrypt(nonce, data, None)
-        return nonce + ciphertext
+        nonce = os.urandom(12)  # 96-bit nonce (estándar GCM)
+        ciphertext = self.aesgcm.encrypt(nonce, data, None)
+        return nonce + ciphertext  # se guarda todo junto
 
     def decrypt(self, data: bytes) -> bytes:
-        nonce = data[:self.NONCE_SIZE]
-        ciphertext = data[self.NONCE_SIZE:]
-        return self.aes.decrypt(nonce, ciphertext, None)
+        nonce = data[:12]
+        ciphertext = data[12:]
+        return self.aesgcm.decrypt(nonce, ciphertext, None)

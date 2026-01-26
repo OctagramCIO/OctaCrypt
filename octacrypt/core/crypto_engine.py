@@ -1,10 +1,8 @@
-from octacrypt.algorithms.xor import XORCipher
 from octacrypt.algorithms.aes import AESAlgorithm
 
 
 class CryptoEngine:
     _ALGORITHMS = {
-        "xor": XORCipher,
         "aes": AESAlgorithm,
     }
 
