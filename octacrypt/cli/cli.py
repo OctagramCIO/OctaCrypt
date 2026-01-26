@@ -3,7 +3,7 @@ import click
 from .encrypt import encrypt
 from .decrypt import decrypt
 from .hash import hash
-from .keygen import keygen
+from ..utils.keygen import keygen
 
 @click.group()
 def cli():
