@@ -3,7 +3,7 @@ import click
 from .encrypt import encrypt
 from .decrypt import decrypt
 from .hash import hash
-from ..utils.keygen import keygen
+from ..utils.keygen import generate_symmetric_key
 
 @click.group()
 def cli():
@@ -13,4 +13,4 @@ def cli():
 cli.add_command(encrypt)
 cli.add_command(decrypt)
 cli.add_command(hash)
-cli.add_command(keygen)
+cli.add_command(generate_symmetric_key)
