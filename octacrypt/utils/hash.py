@@ -1,40 +1,60 @@
-# octacrypt/utils/hash.py
-
-from cryptography.hazmat.primitives import hashes
 import bcrypt
-import os
+import hashlib
 
 
-def hash_sha(data: bytes, algorithm: str = "sha256") -> str:
-    algo = algorithm.lower()
+# -------------------------
+# SHA (archivos / strings)
+# -------------------------
 
-    if algo == "sha256":
-        digest = hashes.Hash(hashes.SHA256())
-    elif algo == "sha512":
-        digest = hashes.Hash(hashes.SHA512())
-    else:
-        raise ValueError("Unsupported SHA algorithm")
-
-    digest.update(data)
-    return digest.finalize().hex()
+def sha256(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
 
 
-def hash_bcrypt(password: str) -> str:
+def sha512(data: bytes) -> str:
+    return hashlib.sha512(data).hexdigest()
+
+
+# -------------------------
+# BCRYPT (passwords)
+# -------------------------
+
+def bcrypt_hash(password: str) -> str:
     salt = bcrypt.gensalt()
     hashed = bcrypt.hashpw(password.encode(), salt)
     return hashed.decode()
 
 
-def verify_bcrypt(password: str, hashed: str) -> bool:
+def bcrypt_verify(password: str, hashed: str) -> bool:
     return bcrypt.checkpw(password.encode(), hashed.encode())
 
 
-def hash_scrypt(password: str) -> bytes:
-    salt = os.urandom(16)
+# -------------------------
+# SCRYPT (passwords)
+# -------------------------
 
-    kdf = hashes.Hash(
-        hashes.SHA256()
+def scrypt_hash(password: str) -> str:
+    salt = bcrypt.gensalt()  # bcrypt salt sirve perfecto
+    key = hashlib.scrypt(
+        password.encode(),
+        salt=salt,
+        n=2**14,
+        r=8,
+        p=1
     )
+    return (salt + key).hex()
 
-    kdf.update(password.encode() + salt)
-    return salt + kdf.finalize()
+
+def scrypt_verify(password: str, stored_hex: str) -> bool:
+    raw = bytes.fromhex(stored_hex)
+    salt = raw[:29]
+    key = raw[29:]
+
+    new_key = hashlib.scrypt(
+        password.encode(),
+        salt=salt,
+        n=2**14,
+        r=8,
+        p=1
+    )
+    return new_key == key
+
