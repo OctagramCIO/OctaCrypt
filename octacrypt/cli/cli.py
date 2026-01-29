@@ -5,6 +5,7 @@ from .decrypt import decrypt
 from .hash import hash
 from .keygen import keygen
 
+
 @click.group()
 def cli():
     """OctaCrypt CLI"""
