@@ -2,6 +2,7 @@ import click
 
 from octacrypt.core.crypto_engine import CryptoEngine
 from octacrypt.utils.keygen import generate_symmetric_key
+from octacrypt.utils.symmetric import generate_symmetric_key
 
 @click.command()
 @click.argument("input_file")
