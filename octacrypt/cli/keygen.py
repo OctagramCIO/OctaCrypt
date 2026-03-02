@@ -17,8 +17,8 @@ from octacrypt.utils.keygen import (
 @click.option(
     "--bits",
     default=2048,
-    type=click.Choice(["2048", "4096"]),
-    help="RSA key size",
+    type=int,
+    help="RSA key size (2048 or 4096)",
 )
 @click.option(
     "--out",
@@ -31,12 +31,15 @@ def keygen(key_type, bits, out):
     """
 
     if key_type == "rsa":
-        private_key = generate_rsa(int(bits))
+        if bits not in (2048, 4096):
+            raise click.BadParameter("RSA bits must be 2048 or 4096")
+
+        private_key = generate_rsa(bits)
 
     elif key_type == "ed25519":
         private_key = generate_ed25519()
 
     private_path, public_path = save_keys(private_key, out)
 
-    click.echo(f"Private key saved to: {private_path}")
-    click.echo(f"Public key saved to: {public_path}")
+    click.echo(f"✔ Private key saved to: {private_path}")
+    click.echo(f"✔ Public key saved to: {public_path}")
