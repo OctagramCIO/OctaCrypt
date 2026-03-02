@@ -2,6 +2,7 @@ from pathlib import Path
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, ed25519
 from cryptography.hazmat.backends import default_backend
+from octacrypt.utils.keygen import generate_rsa_key
 
 
 def generate_rsa(bits: int = 2048):
