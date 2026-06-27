@@ -15,9 +15,9 @@
 
 ---
 
-> "True security is not achieved by hiding systems, but by allowing them to be examined — and still remain strong."
+> "True security is not achieved by hiding systems, but by allowing them to be examined - and still remain strong."
 
-⚠️ **Project status: Active development — do NOT use in production yet.**
+⚠️ **Project status: Active development - do NOT use in production yet.**
 
 ---
 
@@ -25,22 +25,22 @@
 
 OctaCrypt is built on one belief: **your data belongs to you**.
 
-- 🔍 **Auditability** — open-source, readable, testable code
-- 🔐 **Explicit Cryptography** — no hidden behavior, no magic, no obscurity
-- 🧠 **Simplicity** — minimal and understandable design
-- 🌍 **Privacy First** — no telemetry, no tracking, no data collection
-- 🛡️ **Ethical Security** — built to protect users, not to exploit them
+- 🔍 **Auditability** - open-source, readable, testable code
+- 🔐 **Explicit Cryptography** - no hidden behavior, no magic, no obscurity
+- 🧠 **Simplicity** - minimal and understandable design
+- 🌍 **Privacy First** - no telemetry, no tracking, no data collection
+- 🛡️ **Ethical Security** - built to protect users, not to exploit them
 
 ---
 
 ## ✨ What's New in v0.2.0
 
-- ✅ **ChaCha20-Poly1305** — modern cipher used by Signal, WireGuard, TLS 1.3
-- ✅ **Ed25519 digital signatures** — sign and verify files and messages
-- ✅ **Message encryption** — encrypt text directly, no files required
-- ✅ **Password-protected private keys** — private keys encrypted at rest
-- ✅ **Interactive TUI** — full terminal UI with menus, no commands to memorize
-- ✅ **45 tests passing** — comprehensive test suite
+- ✅ **ChaCha20-Poly1305** - modern cipher used by Signal, WireGuard, TLS 1.3
+- ✅ **Ed25519 digital signatures** - sign and verify files and messages
+- ✅ **Message encryption** - encrypt text directly, no files required
+- ✅ **Password-protected private keys** - private keys encrypted at rest
+- ✅ **Interactive TUI** - full terminal UI with menus, no commands to memorize
+- ✅ **45 tests passing** - comprehensive test suite
 
 ---
 
