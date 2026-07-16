@@ -15,7 +15,7 @@
 
 ---
 
-> "True security is not achieved by hiding systems, but by allowing them to be examined - and still remain strong."
+> "True security is not achieved by hiding systems, but by allowing them to be examined and still remain strong."
 
 ⚠️ **Project status: Active development - do NOT use in production yet.**
 
