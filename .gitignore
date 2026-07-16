@@ -1,16 +1,18 @@
 # ================================
 # 🔑 CRYPTOGRAPHIC KEYS — CRITICAL
 # ================================
-# NEVER commit private keys to version control.
-# If you already did, rotate them immediately.
 *_private.pem
 *.key
 *.p12
 *.pfx
 *.jks
 
-# Public keys are safe to commit, but optional
-# *_public.pem
+# ================================
+# PyInstaller — Build outputs
+# ================================
+dist/
+build/
+*.spec
 
 # ================================
 # Python
@@ -22,9 +24,7 @@ __pycache__/
 .Python
 
 # Distribution / packaging
-build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
@@ -40,9 +40,8 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# PyInstaller
+# PyInstaller artifacts
 *.manifest
-*.spec
 
 # Installer logs
 pip-log.txt
@@ -67,16 +66,6 @@ cover/
 *.mo
 *.pot
 
-# Django
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Flask
-instance/
-.webassets-cache
-
 # Environments
 .env
 .envrc
@@ -97,10 +86,7 @@ ipython_config.py
 # pyenv
 # .python-version
 
-# pipenv / poetry / pdm / uv
-# Pipfile.lock
-# poetry.lock
-# pdm.lock
+# pdm
 .pdm-python
 .pdm-build/
 .pixi
@@ -151,6 +137,6 @@ __marimo__/
 *.henc
 *.sig
 
-# Local test keys (generated during dev)
+# Local test keys
 test_*_private.pem
 test_*_public.pem
