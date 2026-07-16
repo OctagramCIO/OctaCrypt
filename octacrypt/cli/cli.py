@@ -34,7 +34,11 @@ def cli():
     """
     pass
 
+from .encrypt_dir import encrypt_dir, decrypt_dir, dir_info
 
+cli.add_command(encrypt_dir)
+cli.add_command(decrypt_dir)
+cli.add_command(dir_info)
 cli.add_command(encrypt)
 cli.add_command(decrypt)
 cli.add_command(hash)
