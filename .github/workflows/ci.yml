@@ -1,0 +1,139 @@
+# .github/workflows/ci.yml
+#
+# OctaCrypt CI/CD Pipeline
+#
+# Se ejecuta en cada push y pull request a main.
+# Corre los tests en Windows, Linux y macOS.
+
+name: OctaCrypt CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+
+  # ─── Tests ───────────────────────────────────────────────────────────────
+
+  test:
+    name: Tests — Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pytest pytest-cov
+
+      - name: Run tests
+        run: |
+          pytest tests/ -v --tb=short
+
+      - name: Run tests with coverage
+        run: |
+          pytest tests/ --cov=octacrypt --cov-report=term-missing --cov-report=xml
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+  # ─── Security check ──────────────────────────────────────────────────────
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install bandit safety
+
+      - name: Run Bandit (static security analysis)
+        run: |
+          bandit -r octacrypt/ -ll -x octacrypt/tui/
+
+      - name: Check dependencies for known vulnerabilities
+        run: |
+          safety check
+
+  # ─── Lint ────────────────────────────────────────────────────────────────
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Ruff
+        run: pip install ruff
+
+      - name: Run Ruff linter
+        run: |
+          ruff check octacrypt/ --select E,F,W --ignore E501
+
+  # ─── Build check ─────────────────────────────────────────────────────────
+
+  build-check:
+    name: Build Check
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install build
+
+      - name: Verify package builds correctly
+        run: |
+          python -m build --wheel
+
+      - name: Verify CLI entry points work
+        run: |
+          octacrypt --help
