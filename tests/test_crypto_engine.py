@@ -1,32 +1,43 @@
+# tests/test_crypto_engine.py
+import pytest
+import os
 from octacrypt.core.crypto_engine import CryptoEngine
 
 
-def test_xor_encrypt_decrypt():
-    engine = CryptoEngine(
-        algorithm="xor",
-        key=b"octagram"
-    )
-
-    original = b"Hello OctaCrypt"
-    encrypted = engine.encrypt(original)
-    decrypted = engine.decrypt(encrypted)
-
-    assert encrypted != original
-    assert decrypted == original
+@pytest.mark.parametrize("alg", ["aes", "chacha20", "AES", "ChaCha20"])
+def test_encrypt_decrypt(alg):
+    key = os.urandom(32)
+    engine = CryptoEngine(alg, key)
+    data = b"test data octacrypt"
+    assert engine.decrypt(engine.encrypt(data)) == data
 
 
-def test_invalid_algorithm():
-    try:
-        CryptoEngine("invalid", b"key")
-        assert False
-    except ValueError:
-        assert True
+def test_unsupported_algorithm():
+    with pytest.raises(ValueError):
+        CryptoEngine("xor", os.urandom(32))
+
+
+def test_unsupported_algorithm_random():
+    with pytest.raises(ValueError):
+        CryptoEngine("hacker123", os.urandom(32))
 
 
 def test_invalid_key_type():
-    try:
-        CryptoEngine("xor", "not-bytes")
-        assert False
-    except TypeError:
-        assert True
+    with pytest.raises(TypeError):
+        CryptoEngine("aes", "not bytes")
 
+
+def test_empty_key():
+    with pytest.raises(ValueError):
+        CryptoEngine("aes", b"")
+
+
+def test_empty_data():
+    engine = CryptoEngine("aes", os.urandom(32))
+    assert engine.decrypt(engine.encrypt(b"")) == b""
+
+
+def test_large_data():
+    engine = CryptoEngine("chacha20", os.urandom(32))
+    data = b"Z" * 5_000_000
+    assert engine.decrypt(engine.encrypt(data)) == data
