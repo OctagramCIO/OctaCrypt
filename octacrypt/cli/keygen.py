@@ -33,7 +33,7 @@ def keygen(key_type, bits, out, password, prompt_password):
             hide_input=True,
             confirmation_prompt="Confirmar contrasena",
         )
-    
+
     if key_type == "rsa":
         if bits not in (2048, 4096):
             raise click.BadParameter("RSA bits debe ser 2048 o 4096")

@@ -46,7 +46,7 @@ def encrypt(input_file, key, out, alg, pub_key):
         cipher = HybridCipher(public_key_pem=pub_path.read_bytes())
         output_path.write_bytes(cipher.encrypt(data))
 
-        click.echo(f"✅ Archivo cifrado con RSA-OAEP + AES-256-GCM")
+        click.echo("✅ Archivo cifrado con RSA-OAEP + AES-256-GCM")
         click.echo(f"   → Entrada : {input_path}")
         click.echo(f"   → Salida  : {output_path}")
         click.echo(f"   → Clave   : {pub_path}")
@@ -59,6 +59,6 @@ def encrypt(input_file, key, out, alg, pub_key):
             key=key,
             algorithm="aes",
         )
-        click.echo(f"✅ Archivo cifrado con AES-256-GCM + PBKDF2")
+        click.echo("✅ Archivo cifrado con AES-256-GCM + PBKDF2")
         click.echo(f"   → Entrada : {input_path}")
         click.echo(f"   → Salida  : {result}")

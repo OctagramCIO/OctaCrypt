@@ -9,6 +9,7 @@ from .keygen import keygen
 from .hybrid import hybrid_encrypt, hybrid_decrypt
 from .sign import sign, verify
 from .message import msg_encrypt, msg_decrypt
+from .encrypt_dir import encrypt_dir, decrypt_dir, dir_info
 
 
 @click.group()
@@ -34,7 +35,6 @@ def cli():
     """
     pass
 
-from .encrypt_dir import encrypt_dir, decrypt_dir, dir_info
 
 cli.add_command(encrypt_dir)
 cli.add_command(decrypt_dir)

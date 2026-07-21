@@ -6,10 +6,14 @@ from octacrypt.core.dir_crypto import encrypt_directory, decrypt_directory, get_
 
 
 def _fmt(n: int) -> str:
-    if n < 1024: return f"{n} B"
-    elif n < 1024**2: return f"{n/1024:.1f} KB"
-    elif n < 1024**3: return f"{n/1024**2:.1f} MB"
-    else: return f"{n/1024**3:.2f} GB"
+    if n < 1024:
+        return f"{n} B"
+    elif n < 1024**2:
+        return f"{n/1024:.1f} KB"
+    elif n < 1024**3:
+        return f"{n/1024**2:.1f} MB"
+    else:
+        return f"{n/1024**3:.2f} GB"
 
 
 @click.command("encrypt-dir")
@@ -36,7 +40,7 @@ def encrypt_dir(input_dir, key, out, alg):
     click.echo(f"Cifrando con {label}...")
     try:
         result, files, total = encrypt_directory(input_path, Path(out) if out else None, key=key, algorithm=alg)
-        click.echo(f"Directorio cifrado correctamente")
+        click.echo("Directorio cifrado correctamente")
         click.echo(f"   -> Entrada  : {input_path}")
         click.echo(f"   -> Salida   : {result}")
         click.echo(f"   -> Archivos : {files}")
@@ -66,7 +70,7 @@ def decrypt_dir(input_dir, key, out):
     click.echo("Descifrando directorio...")
     try:
         result, files, total = decrypt_directory(input_path, Path(out) if out else None, key=key)
-        click.echo(f"Directorio descifrado correctamente")
+        click.echo("Directorio descifrado correctamente")
         click.echo(f"   -> Entrada  : {input_path}")
         click.echo(f"   -> Salida   : {result}")
         click.echo(f"   -> Archivos : {files}")
@@ -89,13 +93,13 @@ def dir_info(input_dir):
     """
     try:
         info = get_directory_info(Path(input_dir))
-        click.echo(f"Directorio OctaCrypt")
+        click.echo("Directorio OctaCrypt")
         click.echo(f"   -> Original  : {info['original_dir']}")
         click.echo(f"   -> Algoritmo : {info['algorithm'].upper()}")
         click.echo(f"   -> Archivos  : {info['total_files']}")
         click.echo(f"   -> Tamano    : {_fmt(info['total_bytes'])}")
         click.echo(f"   -> Creado    : {info['created_at']}")
-        click.echo(f"\nArchivos:")
+        click.echo("\nArchivos:")
         for entry in info["files"]:
             click.echo(f"   {entry['original']}  ({_fmt(entry['size'])})")
     except FileNotFoundError as e:

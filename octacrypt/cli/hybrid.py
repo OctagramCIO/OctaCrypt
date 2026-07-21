@@ -41,7 +41,7 @@ def hybrid_encrypt(input_file, pub_key, out):
 
     output_path.write_bytes(encrypted)
 
-    click.echo(f"✅ Archivo cifrado con RSA + AES-256-GCM")
+    click.echo("✅ Archivo cifrado con RSA + AES-256-GCM")
     click.echo(f"   → Entrada : {input_path}")
     click.echo(f"   → Salida  : {output_path}")
     click.echo(f"   → Clave   : {pub_path}")
@@ -89,7 +89,7 @@ def hybrid_decrypt(input_file, priv_key, out, password):
 
     output_path.write_bytes(decrypted)
 
-    click.echo(f"✅ Archivo descifrado correctamente")
+    click.echo("✅ Archivo descifrado correctamente")
     click.echo(f"   → Entrada : {input_path}")
     click.echo(f"   → Salida  : {output_path}")
     click.echo(f"   → Clave   : {priv_path}")

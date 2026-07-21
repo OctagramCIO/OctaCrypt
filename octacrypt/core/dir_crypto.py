@@ -1,5 +1,4 @@
 import json
-import os
 from pathlib import Path
 from datetime import datetime, timezone
 from octacrypt.core.crypto import encrypt_file, decrypt_file

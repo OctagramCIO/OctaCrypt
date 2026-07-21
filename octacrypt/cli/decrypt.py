@@ -49,7 +49,7 @@ def decrypt(input_file, key, out, alg, priv_key):
         cipher = HybridCipher(private_key_pem=priv_path.read_bytes())
         output_path.write_bytes(cipher.decrypt(data))
 
-        click.echo(f"✅ Archivo descifrado correctamente")
+        click.echo("✅ Archivo descifrado correctamente")
         click.echo(f"   → Entrada : {input_path}")
         click.echo(f"   → Salida  : {output_path}")
         click.echo(f"   → Clave   : {priv_path}")
@@ -72,6 +72,6 @@ def decrypt(input_file, key, out, alg, priv_key):
                 "No se pudo descifrar. Verifica que la contraseña y el algoritmo sean correctos."
             )
 
-        click.echo(f"✅ Archivo descifrado correctamente")
+        click.echo("✅ Archivo descifrado correctamente")
         click.echo(f"   → Entrada : {input_path}")
         click.echo(f"   → Salida  : {result}")

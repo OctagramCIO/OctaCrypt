@@ -44,7 +44,7 @@ def sign(target, priv_key, out, message):
         target_path = Path(target)
         output_path = Path(out) if out else target_path.with_suffix(target_path.suffix + ".sig")
         output_path.write_bytes(signature)
-        click.echo(f"✅ Archivo firmado con Ed25519")
+        click.echo("✅ Archivo firmado con Ed25519")
         click.echo(f"   → Archivo : {target_path}")
         click.echo(f"   → Firma   : {output_path}")
         click.echo(f"   → Clave   : {priv_path}")

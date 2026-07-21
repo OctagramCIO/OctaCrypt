@@ -91,7 +91,7 @@ def menu_file_encrypt():
         try:
             cipher = HybridCipher(public_key_pem=pub_key.read_bytes())
             output_path.write_bytes(cipher.encrypt(input_file.read_bytes()))
-            success(f"Archivo cifrado con RSA + AES-256-GCM")
+            success("Archivo cifrado con RSA + AES-256-GCM")
             info(f"Salida: {output_path}")
         except Exception as e:
             error(f"{e}")

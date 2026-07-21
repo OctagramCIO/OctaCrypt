@@ -52,7 +52,7 @@ def msg_encrypt(message, password, pub_key, sign_priv):
 
     click.echo(f"✅ Mensaje cifrado [{mode}]")
     if sign_priv:
-        click.echo(f"   🔏 Firmado con Ed25519")
+        click.echo("   🔏 Firmado con Ed25519")
     click.echo(f"\n{b64}")
 
 
@@ -102,5 +102,5 @@ def msg_decrypt(ciphertext, password, priv_key, verify_pub):
     except ValueError as e:
         raise click.ClickException(str(e))
 
-    click.echo(f"✅ Mensaje descifrado:")
+    click.echo("✅ Mensaje descifrado:")
     click.echo(f"\n{plaintext.decode()}")
