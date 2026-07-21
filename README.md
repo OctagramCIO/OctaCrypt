@@ -8,16 +8,17 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://python.org)
-[![Version](https://img.shields.io/badge/Version-0.2.0-brightgreen.svg)]()
+[![Version](https://img.shields.io/badge/Version-0.3.0-brightgreen.svg)]()
+[![CI](https://github.com/OctagramCIO/OctaCrypt/actions/workflows/ci.yml/badge.svg)](https://github.com/OctagramCIO/OctaCrypt/actions)
 [![Status](https://img.shields.io/badge/Status-Active%20Development-orange.svg)]()
 
 </div>
 
 ---
 
-> "True security is not achieved by hiding systems, but by allowing them to be examined and still remain strong."
+> "True security is not achieved by hiding systems, but by allowing them to be examined — and still remain strong."
 
-⚠️ **Project status: Active development - do NOT use in production yet.**
+⚠️ **Project status: Active development — do NOT use in production yet.**
 
 ---
 
@@ -25,22 +26,20 @@
 
 OctaCrypt is built on one belief: **your data belongs to you**.
 
-- 🔍 **Auditability** - open-source, readable, testable code
-- 🔐 **Explicit Cryptography** - no hidden behavior, no magic, no obscurity
-- 🧠 **Simplicity** - minimal and understandable design
-- 🌍 **Privacy First** - no telemetry, no tracking, no data collection
-- 🛡️ **Ethical Security** - built to protect users, not to exploit them
+- 🔍 **Auditability** — open-source, readable, testable code
+- 🔐 **Explicit Cryptography** — no hidden behavior, no magic, no obscurity
+- 🧠 **Simplicity** — minimal and understandable design
+- 🌍 **Privacy First** — no telemetry, no tracking, no data collection
+- 🛡️ **Ethical Security** — built to protect users, not to exploit them
 
 ---
 
-## ✨ What's New in v0.2.0
+## ✨ What's New in v0.3.0
 
-- ✅ **ChaCha20-Poly1305** - modern cipher used by Signal, WireGuard, TLS 1.3
-- ✅ **Ed25519 digital signatures** - sign and verify files and messages
-- ✅ **Message encryption** - encrypt text directly, no files required
-- ✅ **Password-protected private keys** - private keys encrypted at rest
-- ✅ **Interactive TUI** - full terminal UI with menus, no commands to memorize
-- ✅ **45 tests passing** - comprehensive test suite
+- ✅ **Directory encryption** — encrypt entire folders preserving structure
+- ✅ **Portable executable** — `.exe` for Windows, binary for Linux/macOS (no Python required)
+- ✅ **GitHub Actions CI/CD** — automated tests on Windows, Linux and macOS
+- ✅ **Security policy** — responsible disclosure process in SECURITY.md
 
 ---
 
@@ -73,25 +72,32 @@ OctaCrypt/
 │   ├── core/
 │   │   ├── crypto_engine.py  # Central engine (AES + ChaCha20)
 │   │   ├── crypto.py         # File encrypt/decrypt
+│   │   ├── dir_crypto.py     # Directory encrypt/decrypt
 │   │   └── messenger.py      # Message encrypt/decrypt + signing
 │   ├── cli/
 │   │   ├── cli.py            # Main CLI entry point
+│   │   ├── cli_entry.py      # Entry point for portable executable
 │   │   ├── encrypt.py        # octacrypt encrypt
 │   │   ├── decrypt.py        # octacrypt decrypt
+│   │   ├── encrypt_dir.py    # octacrypt encrypt-dir / decrypt-dir
 │   │   ├── hybrid.py         # octacrypt hybrid-encrypt/decrypt
 │   │   ├── sign.py           # octacrypt sign/verify
 │   │   ├── message.py        # octacrypt msg-encrypt/decrypt
 │   │   ├── hash.py           # octacrypt hash
 │   │   └── keygen.py         # octacrypt keygen
 │   ├── tui/
-│   │   └── tui.py            # Interactive terminal UI
+│   │   ├── tui.py            # Interactive terminal UI
+│   │   └── tui_entry.py      # Entry point for portable executable
 │   └── utils/
 │       ├── kdf.py            # PBKDF2 key derivation
 │       ├── hash.py           # Hashing functions
 │       ├── keygen.py         # Key generation + protected storage
 │       └── logger.py         # Internal logger
-├── tests/                    # 45 tests — full coverage
-├── docs/
+├── tests/                    # Full test suite (CI on 3 OS)
+├── .github/
+│   └── workflows/
+│       └── ci.yml            # GitHub Actions CI/CD
+├── build.py                  # Portable executable build script
 ├── README.md
 ├── SECURITY.md
 └── pyproject.toml
@@ -101,6 +107,8 @@ OctaCrypt/
 
 ## 🚀 Installation
 
+### From source
+
 ```bash
 git clone https://github.com/OctagramCIO/OctaCrypt.git
 cd OctaCrypt
@@ -109,6 +117,20 @@ pip install -e .
 
 Requires **Python 3.10+**
 
+### Portable executable (no Python required)
+
+Download the latest release from the [Releases](https://github.com/OctagramCIO/OctaCrypt/releases) page:
+
+- `octacrypt.exe` — CLI for Windows
+- `octacrypt-tui.exe` — TUI for Windows
+
+Or build it yourself:
+
+```bash
+pip install pyinstaller
+python build.py
+```
+
 ---
 
 ## 🖥️ Interactive TUI (recommended)
@@ -116,11 +138,16 @@ Requires **Python 3.10+**
 The easiest way to use OctaCrypt — no commands to memorize:
 
 ```bash
+# From source
 octacrypt-tui
+
+# Portable
+.\dist\octacrypt-tui.exe
 ```
 
 Features available in the TUI:
 - 🔒 Encrypt / decrypt files
+- 📁 Encrypt / decrypt directories
 - ✉️ Encrypt / decrypt messages
 - 🔏 Sign and verify files
 - 🔑 Generate keypairs (with password protection)
@@ -162,6 +189,22 @@ octacrypt decrypt document.pdf.enc --alg hybrid --priv mykey_private.pem
 
 ---
 
+### 📂 Directory Encryption
+
+```bash
+# Encrypt entire directory (preserves structure)
+octacrypt encrypt-dir documents/ --key mypassword
+octacrypt encrypt-dir documents/ --alg chacha20 --key mypassword
+
+# Decrypt
+octacrypt decrypt-dir documents.enc/ --key mypassword
+
+# Inspect encrypted directory
+octacrypt dir-info documents.enc/
+```
+
+---
+
 ### ✉️ Message Encryption
 
 ```bash
@@ -191,12 +234,6 @@ octacrypt sign document.pdf --priv signkey_private.pem
 
 # Verify signature
 octacrypt verify document.pdf --pub signkey_public.pem --sig document.pdf.sig
-
-# Sign a message
-octacrypt sign "hello octagram" --priv signkey_private.pem --message
-
-# Verify a message
-octacrypt verify "hello octagram" --pub signkey_public.pem --signature <hex> --message
 ```
 
 ---
@@ -219,41 +256,32 @@ pip install pytest
 pytest tests/ -v
 ```
 
-Current coverage: **45 tests passing**
-
-| Module | Tests |
-|---|---|
-| AES-256-GCM | 9 |
-| ChaCha20-Poly1305 | 7 |
-| CryptoEngine | 6 |
-| PBKDF2 KDF | 8 |
-| File encrypt/decrypt | 5 |
-| Ed25519 signatures | 7 |
-| Message cipher | 10 |
-| Keygen + password protection | 7 |
+Tests run automatically on every push via GitHub Actions across:
+- **OS:** Windows, Linux, macOS
+- **Python:** 3.10, 3.11, 3.12
 
 ---
 
 ## 🗺️ Roadmap
 
-### v0.2.0 ✅ Current
+### v0.2.0 ✅
 - AES-256-GCM + ChaCha20-Poly1305
 - RSA hybrid encryption
 - Ed25519 digital signatures
 - Password-protected private keys
 - Interactive TUI
-- 45 tests
 
-### v0.3.0 🔨 In Progress
+### v0.3.0 ✅ Current
 - Directory encryption
-- Portable executable (.exe / binary)
-- SECURITY.md + vulnerability policy
+- Portable executable (.exe)
 - GitHub Actions CI/CD
+- Security policy
 
 ### v1.0.0 🎯 Planned
 - Independent security audit
 - Full documentation
 - Stable API
+- Hardware key support (YubiKey)
 
 ---
 
