@@ -24,6 +24,10 @@ STYLE = Style([
     ("instruction",  "fg:#888888"),
 ])
 
+VERSION = "0.3.0"
+
+
+# ─── Helpers ─────────────────────────────────────────────────────────────────
 
 def show_banner():
     console.clear()
@@ -41,32 +45,72 @@ def show_banner():
     console.print(banner)
 
 
-def success(msg):
+def success(msg: str):
     console.print(f"\n[bold green]OK[/bold green] {msg}")
 
-def error(msg):
+
+def error(msg: str):
     console.print(f"\n[bold red]ERROR[/bold red] {msg}")
 
-def info(msg):
+
+def info(msg: str):
     console.print(f"\n[bold cyan]->[/bold cyan] {msg}")
+
+
+def warning(msg: str):
+    console.print(f"\n[bold yellow]AVISO[/bold yellow] {msg}")
+
 
 def pause():
     console.print()
     questionary.press_any_key_to_continue("  Presiona cualquier tecla para continuar...").ask()
 
-def ask_file(prompt):
+
+def ask_file(prompt: str) -> Path | None:
     path_str = questionary.path(prompt, style=STYLE).ask()
     if not path_str:
         return None
-    path = Path(path_str)
+    path = Path(path_str.strip())
     if not path.exists():
         error(f"Archivo no encontrado: {path}")
         return None
     return path
 
-def ask_password(prompt="Contrasena"):
-    return questionary.password(prompt, style=STYLE).ask()
 
+def ask_directory(prompt: str) -> Path | None:
+    path_str = questionary.path(prompt, style=STYLE).ask()
+    if not path_str:
+        return None
+    path = Path(path_str.strip())
+    if not path.exists():
+        error(f"Directorio no encontrado: {path}")
+        return None
+    if not path.is_dir():
+        error(f"No es un directorio: {path}")
+        return None
+    return path
+
+
+def ask_password(prompt: str = "Contrasena") -> str | None:
+    pw = questionary.password(prompt, style=STYLE).ask()
+    if not pw:
+        error("La contrasena no puede estar vacia.")
+        return None
+    return pw
+
+
+def fmt_bytes(n: int) -> str:
+    if n < 1024:
+        return f"{n} B"
+    elif n < 1024 ** 2:
+        return f"{n / 1024:.1f} KB"
+    elif n < 1024 ** 3:
+        return f"{n / 1024 ** 2:.1f} MB"
+    else:
+        return f"{n / 1024 ** 3:.2f} GB"
+
+
+# ─── Menús ───────────────────────────────────────────────────────────────────
 
 def menu_file_encrypt():
     console.print(Panel("[bold green]Cifrar Archivo[/bold green]", box=box.ROUNDED))
@@ -93,8 +137,9 @@ def menu_file_encrypt():
             output_path.write_bytes(cipher.encrypt(input_file.read_bytes()))
             success("Archivo cifrado con RSA + AES-256-GCM")
             info(f"Salida: {output_path}")
+            info(f"Tamano: {fmt_bytes(output_path.stat().st_size)}")
         except Exception as e:
-            error(f"{e}")
+            error(f"No se pudo cifrar: {e}")
     else:
         algorithm = "aes" if "AES" in alg else "chacha20"
         password = ask_password()
@@ -106,8 +151,9 @@ def menu_file_encrypt():
             label = "AES-256-GCM" if algorithm == "aes" else "ChaCha20-Poly1305"
             success(f"Archivo cifrado con {label} + PBKDF2")
             info(f"Salida: {result}")
+            info(f"Tamano: {fmt_bytes(result.stat().st_size)}")
         except Exception as e:
-            error(f"{e}")
+            error(f"No se pudo cifrar: {e}")
     pause()
 
 
@@ -129,16 +175,22 @@ def menu_file_decrypt():
         if not priv_key:
             return
         pw = ask_password("Contrasena de la clave privada (Enter si no tiene):")
-        output_path = input_file.with_suffix("") if input_file.suffix == ".enc" else input_file.with_suffix(".dec")
+        output_path = (
+            input_file.with_suffix("") if input_file.suffix == ".enc"
+            else input_file.with_suffix(".dec")
+        )
         from octacrypt.algorithms.hybrid import HybridCipher
         try:
             pw_bytes = pw.encode() if pw else None
-            cipher = HybridCipher(private_key_pem=priv_key.read_bytes(), private_key_password=pw_bytes)
+            cipher = HybridCipher(
+                private_key_pem=priv_key.read_bytes(),
+                private_key_password=pw_bytes,
+            )
             output_path.write_bytes(cipher.decrypt(input_file.read_bytes()))
             success("Archivo descifrado correctamente")
             info(f"Salida: {output_path}")
         except Exception as e:
-            error(f"{e}")
+            error(f"No se pudo descifrar: {e}")
     else:
         password = ask_password()
         if not password:
@@ -148,14 +200,82 @@ def menu_file_decrypt():
             result = decrypt_file(input_file, None, key=password)
             success("Archivo descifrado correctamente")
             info(f"Salida: {result}")
-        except Exception:
-            error("No se pudo descifrar. Verifica la contrasena.")
+        except Exception as e:
+            error(f"No se pudo descifrar. Verifica la contrasena. ({type(e).__name__})")
+    pause()
+
+
+def menu_dir_encrypt():
+    console.print(Panel("[bold green]Cifrar Directorio[/bold green]", box=box.ROUNDED))
+    input_dir = ask_directory("Directorio a cifrar:")
+    if not input_dir:
+        return
+
+    alg = questionary.select("Algoritmo:", choices=[
+        "AES-256-GCM (recomendado)",
+        "ChaCha20-Poly1305 (mas rapido en moviles)",
+    ], style=STYLE).ask()
+    if alg is None:
+        return
+
+    algorithm = "aes" if "AES" in alg else "chacha20"
+    password = ask_password()
+    if not password:
+        return
+
+    from octacrypt.core.dir_crypto import encrypt_directory
+    try:
+        info("Cifrando directorio...")
+        result, files, total = encrypt_directory(
+            input_dir=input_dir,
+            output_dir=None,
+            key=password,
+            algorithm=algorithm,
+        )
+        label = "AES-256-GCM" if algorithm == "aes" else "ChaCha20-Poly1305"
+        success(f"Directorio cifrado con {label} + PBKDF2")
+        info(f"Salida   : {result}")
+        info(f"Archivos : {files}")
+        info(f"Tamano   : {fmt_bytes(total)}")
+    except Exception as e:
+        error(f"No se pudo cifrar el directorio: {e}")
+    pause()
+
+
+def menu_dir_decrypt():
+    console.print(Panel("[bold green]Descifrar Directorio[/bold green]", box=box.ROUNDED))
+    input_dir = ask_directory("Directorio cifrado (.enc):")
+    if not input_dir:
+        return
+
+    password = ask_password()
+    if not password:
+        return
+
+    from octacrypt.core.dir_crypto import decrypt_directory
+    try:
+        info("Descifrando directorio...")
+        result, files, total = decrypt_directory(
+            input_dir=input_dir,
+            output_dir=None,
+            key=password,
+        )
+        success("Directorio descifrado correctamente")
+        info(f"Salida   : {result}")
+        info(f"Archivos : {files}")
+        info(f"Tamano   : {fmt_bytes(total)}")
+    except FileNotFoundError as e:
+        error(f"Manifiesto no encontrado. El directorio fue cifrado con OctaCrypt? ({e})")
+    except Exception as e:
+        error(f"No se pudo descifrar. Verifica la contrasena. ({type(e).__name__})")
     pause()
 
 
 def menu_message():
     console.print(Panel("[bold green]Cifrar / Descifrar Mensaje[/bold green]", box=box.ROUNDED))
-    action = questionary.select("Accion:", choices=["Cifrar mensaje", "Descifrar mensaje"], style=STYLE).ask()
+    action = questionary.select(
+        "Accion:", choices=["Cifrar mensaje", "Descifrar mensaje"], style=STYLE
+    ).ask()
     if action is None:
         return
 
@@ -164,10 +284,16 @@ def menu_message():
     if "Cifrar" in action:
         message = questionary.text("Mensaje a cifrar:", style=STYLE).ask()
         if not message:
+            error("El mensaje no puede estar vacio.")
+            pause()
             return
-        mode = questionary.select("Modo:", choices=["Simetrico (password)", "Hibrido RSA (clave publica)"], style=STYLE).ask()
+
+        mode = questionary.select(
+            "Modo:", choices=["Simetrico (password)", "Hibrido RSA (clave publica)"], style=STYLE
+        ).ask()
         if mode is None:
             return
+
         try:
             if "Hibrido" in mode:
                 pub_key = ask_file("Clave publica RSA (.pem):")
@@ -175,48 +301,73 @@ def menu_message():
                     return
                 encrypted = MessageCipher.encrypt_hybrid(message, pub_key.read_bytes())
             else:
-                alg_choice = questionary.select("Algoritmo:", choices=["AES-256-GCM", "ChaCha20-Poly1305"], style=STYLE).ask()
+                alg_choice = questionary.select(
+                    "Algoritmo:", choices=["AES-256-GCM", "ChaCha20-Poly1305"], style=STYLE
+                ).ask()
+                if alg_choice is None:
+                    return
                 algorithm = "aes" if "AES" in alg_choice else "chacha20"
                 password = ask_password()
                 if not password:
                     return
                 encrypted = MessageCipher.encrypt_symmetric(message, password, algorithm=algorithm)
+
             b64 = MessageCipher.to_base64(encrypted)
             success("Mensaje cifrado:")
             console.print(Panel(b64, title="[green]Ciphertext (base64)[/green]", box=box.ROUNDED))
         except Exception as e:
-            error(f"{e}")
+            error(f"No se pudo cifrar: {e}")
+
     else:
         ciphertext = questionary.text("Pega el ciphertext (base64):", style=STYLE).ask()
         if not ciphertext:
+            error("El ciphertext no puede estar vacio.")
+            pause()
             return
-        mode = questionary.select("Modo:", choices=["Simetrico (password)", "Hibrido RSA (clave privada)"], style=STYLE).ask()
+
+        mode = questionary.select(
+            "Modo:", choices=["Simetrico (password)", "Hibrido RSA (clave privada)"], style=STYLE
+        ).ask()
         if mode is None:
             return
+
         try:
-            data = MessageCipher.from_base64(ciphertext)
+            data = MessageCipher.from_base64(ciphertext.strip())
+        except Exception:
+            error("El ciphertext no es base64 valido.")
+            pause()
+            return
+
+        try:
             if "Hibrido" in mode:
                 priv_key = ask_file("Clave privada RSA (.pem):")
                 if not priv_key:
                     return
                 pw = ask_password("Contrasena de la clave privada (Enter si no tiene):")
                 pw_bytes = pw.encode() if pw else None
-                plaintext = MessageCipher.decrypt_hybrid(data, priv_key.read_bytes(), private_key_password=pw_bytes)
+                plaintext = MessageCipher.decrypt_hybrid(
+                    data, priv_key.read_bytes(), private_key_password=pw_bytes
+                )
             else:
                 password = ask_password()
                 if not password:
                     return
                 plaintext = MessageCipher.decrypt_symmetric(data, password)
+
             success("Mensaje descifrado:")
             console.print(Panel(plaintext.decode(), title="[green]Plaintext[/green]", box=box.ROUNDED))
+        except ValueError as e:
+            error(f"Error de integridad: {e}")
         except Exception as e:
-            error(f"{e}")
+            error(f"No se pudo descifrar. Verifica la clave. ({type(e).__name__})")
     pause()
 
 
 def menu_sign():
     console.print(Panel("[bold green]Firmas Digitales Ed25519[/bold green]", box=box.ROUNDED))
-    action = questionary.select("Accion:", choices=["Firmar archivo", "Verificar firma"], style=STYLE).ask()
+    action = questionary.select(
+        "Accion:", choices=["Firmar archivo", "Verificar firma"], style=STYLE
+    ).ask()
     if action is None:
         return
 
@@ -232,13 +383,16 @@ def menu_sign():
         pw = ask_password("Contrasena de la clave privada (Enter si no tiene):")
         try:
             pw_bytes = pw.encode() if pw else None
-            signer = Ed25519Signer(private_key_pem=priv_key.read_bytes(), private_key_password=pw_bytes)
+            signer = Ed25519Signer(
+                private_key_pem=priv_key.read_bytes(),
+                private_key_password=pw_bytes,
+            )
             sig_path = target.with_suffix(target.suffix + ".sig")
             sig_path.write_bytes(signer.sign(target.read_bytes()))
             success("Archivo firmado con Ed25519")
             info(f"Firma guardada en: {sig_path}")
         except Exception as e:
-            error(f"{e}")
+            error(f"No se pudo firmar: {e}")
     else:
         target = ask_file("Archivo a verificar:")
         if not target:
@@ -257,7 +411,7 @@ def menu_sign():
             else:
                 error("Firma INVALIDA — contenido puede haber sido manipulado.")
         except Exception as e:
-            error(f"{e}")
+            error(f"Error al verificar: {e}")
     pause()
 
 
@@ -271,13 +425,23 @@ def menu_keygen():
         return
 
     name = questionary.text("Nombre base del archivo:", default="key", style=STYLE).ask()
-    if not name:
+    if not name or not name.strip():
+        error("El nombre no puede estar vacio.")
+        pause()
         return
 
-    protect = questionary.confirm("Proteger la clave privada con password?", default=True, style=STYLE).ask()
+    name = name.strip()
+    protect = questionary.confirm(
+        "Proteger la clave privada con password?", default=True, style=STYLE
+    ).ask()
+
     password = None
     if protect:
         password = questionary.password("Contrasena:", style=STYLE).ask()
+        if not password:
+            error("La contrasena no puede estar vacia.")
+            pause()
+            return
         confirm = questionary.password("Confirmar contrasena:", style=STYLE).ask()
         if password != confirm:
             error("Las contrasenas no coinciden.")
@@ -296,20 +460,26 @@ def menu_keygen():
         success("Par de claves generado")
         info(f"Privada: {priv_path}" + (" [CIFRADA]" if password else " [SIN proteccion]"))
         info(f"Publica: {pub_path}")
+
         if not password:
-            console.print("\n[bold yellow]ADVERTENCIA:[/bold yellow] Se recomienda proteger la clave privada con password.")
+            warning("Se recomienda proteger la clave privada con password.")
     except Exception as e:
-        error(f"{e}")
+        error(f"No se pudo generar la clave: {e}")
     pause()
 
 
 def menu_hash():
     console.print(Panel("[bold green]Hashing[/bold green]", box=box.ROUNDED))
     target = questionary.text("Texto o ruta de archivo:", style=STYLE).ask()
-    if not target:
+    if not target or not target.strip():
+        error("El campo no puede estar vacio.")
+        pause()
         return
 
-    alg = questionary.select("Algoritmo:", choices=["SHA-256", "SHA-512", "bcrypt", "scrypt"], style=STYLE).ask()
+    target = target.strip()
+    alg = questionary.select(
+        "Algoritmo:", choices=["SHA-256", "SHA-512", "bcrypt", "scrypt"], style=STYLE
+    ).ask()
     if alg is None:
         return
 
@@ -329,7 +499,7 @@ def menu_hash():
         success(f"Hash [{alg}]:")
         console.print(Panel(result, box=box.ROUNDED))
     except Exception as e:
-        error(f"{e}")
+        error(f"No se pudo hashear: {e}")
     pause()
 
 
@@ -337,21 +507,24 @@ def show_about():
     table = Table(box=box.ROUNDED, show_header=False, padding=(0, 2))
     table.add_column("Campo", style="bold green")
     table.add_column("Valor", style="white")
-    table.add_row("Version",           "0.2.0")
+    table.add_row("Version",           VERSION)
     table.add_row("Proyecto",          "OctaCrypt")
     table.add_row("Autor",             "Octagram")
     table.add_row("Licencia",          "MIT")
     table.add_row("Repo",              "github.com/OctagramCIO/OctaCrypt")
     table.add_row("", "")
-    table.add_row("AES-256-GCM",       "[green]activo[/green]")
-    table.add_row("ChaCha20-Poly1305", "[green]activo[/green]")
-    table.add_row("RSA-OAEP + AES",    "[green]activo[/green]")
-    table.add_row("Ed25519",           "[green]activo[/green]")
-    table.add_row("PBKDF2 (200k it.)", "[green]activo[/green]")
-    table.add_row("bcrypt / scrypt",   "[green]activo[/green]")
+    table.add_row("AES-256-GCM",           "[green]activo[/green]")
+    table.add_row("ChaCha20-Poly1305",     "[green]activo[/green]")
+    table.add_row("RSA-OAEP + AES",        "[green]activo[/green]")
+    table.add_row("Ed25519",               "[green]activo[/green]")
+    table.add_row("PBKDF2 (200k it.)",     "[green]activo[/green]")
+    table.add_row("bcrypt / scrypt",       "[green]activo[/green]")
+    table.add_row("Cifrado directorios",   "[green]activo[/green]")
     console.print(Panel(table, title="[bold green]Acerca de OctaCrypt[/bold green]", box=box.ROUNDED))
     pause()
 
+
+# ─── Menú principal ──────────────────────────────────────────────────────────
 
 def main():
     while True:
@@ -361,6 +534,8 @@ def main():
             choices=[
                 "Cifrar archivo",
                 "Descifrar archivo",
+                "Cifrar directorio",
+                "Descifrar directorio",
                 "Cifrar / Descifrar mensaje",
                 "Firmar / Verificar archivo",
                 "Generar claves",
@@ -378,6 +553,10 @@ def main():
             menu_file_encrypt()
         elif choice == "Descifrar archivo":
             menu_file_decrypt()
+        elif choice == "Cifrar directorio":
+            menu_dir_encrypt()
+        elif choice == "Descifrar directorio":
+            menu_dir_decrypt()
         elif choice == "Cifrar / Descifrar mensaje":
             menu_message()
         elif choice == "Firmar / Verificar archivo":

@@ -1,3 +1,5 @@
+# octacrypt/core/dir_crypto.py
+
 import json
 from pathlib import Path
 from datetime import datetime, timezone
@@ -22,7 +24,7 @@ def encrypt_directory(input_dir, output_dir, key: str, algorithm: str = "aes"):
     total_bytes = 0
     manifest_entries = []
 
-    for file_path in [f for f in input_dir.rglob("*") if f.is_file()]:
+    for file_path in sorted([f for f in input_dir.rglob("*") if f.is_file()]):
         relative = file_path.relative_to(input_dir)
         output_file = output_dir / (str(relative) + ".enc")
         output_file.parent.mkdir(parents=True, exist_ok=True)
@@ -74,7 +76,7 @@ def decrypt_directory(input_dir, output_dir, key: str):
         enc_file = input_dir / entry["encrypted"]
         out_file = output_dir / entry["original"]
         if not enc_file.exists():
-            raise FileNotFoundError(f"Archivo no encontrado: {enc_file}")
+            raise FileNotFoundError(f"Archivo cifrado no encontrado: {enc_file}")
         out_file.parent.mkdir(parents=True, exist_ok=True)
         decrypt_file(enc_file, out_file, key=key)
         files_decrypted += 1
@@ -88,13 +90,3 @@ def get_directory_info(input_dir) -> dict:
     if not manifest_path.exists():
         raise FileNotFoundError(f"No es un directorio OctaCrypt: {input_dir}")
     return json.loads(manifest_path.read_text(encoding="utf-8"))
-
-
-def read_manifest(enc_dir) -> dict:
-    """Lee el manifiesto de un directorio cifrado."""
-    from pathlib import Path
-    manifest_path = Path(enc_dir) / MANIFEST_NAME
-    if not manifest_path.exists():
-        raise FileNotFoundError(f"Manifiesto no encontrado en: {enc_dir}")
-    import json
-    return json.loads(manifest_path.read_text())
