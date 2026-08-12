@@ -22,6 +22,8 @@
 
 ---
 
+📖 **¿Primera vez usando OctaCrypt?** Lee la [Guía de Usuario](GUIA_USUARIO.md)
+
 ## 🧭 Philosophy
 
 OctaCrypt is built on one belief: **your data belongs to you**.
