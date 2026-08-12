@@ -6,7 +6,8 @@ The following versions currently receive security updates:
 
 | Version | Supported |
 |---------|-----------|
-| 0.2.x   | ✅ Active |
+| 0.3.x   | ✅ Active |
+| 0.2.x   | ❌ No longer supported |
 | 0.1.x   | ❌ No longer supported |
 
 ---
@@ -31,6 +32,7 @@ The following are considered **in scope** for security reports:
 - Authentication bypass in any module
 - Data integrity failures (tampered ciphertext not detected)
 - Insecure defaults in CLI or TUI
+- Directory encryption manifest tampering
 - Dependency vulnerabilities with direct impact on OctaCrypt
 
 The following are **out of scope**:
@@ -38,7 +40,7 @@ The following are **out of scope**:
 - Vulnerabilities in dependencies without direct exploitability in OctaCrypt
 - Social engineering attacks
 - Physical access attacks
-- Issues in unsupported versions (< 0.2.0)
+- Issues in unsupported versions (< 0.3.0)
 
 ---
 
@@ -105,6 +107,8 @@ The following are known limitations, not bugs:
 - Key management is the user's responsibility — lost keys mean lost data
 - The TUI does not currently support hardware security keys (YubiKey, etc.)
 - No forward secrecy in file encryption (planned for v1.0)
+- No post-quantum cryptography yet (planned for v1.0 — ML-KEM / ML-DSA)
+- Directory encryption does not support streaming for very large files
 
 ---
 
