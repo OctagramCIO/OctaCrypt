@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://python.org)
-[![Version](https://img.shields.io/badge/Version-0.3.0-brightgreen.svg)]()
+[![Version](https://img.shields.io/badge/Version-0.3.1-brightgreen.svg)]()
 [![CI](https://github.com/OctagramCIO/OctaCrypt/actions/workflows/ci.yml/badge.svg)](https://github.com/OctagramCIO/OctaCrypt/actions)
 [![Status](https://img.shields.io/badge/Status-Active%20Development-orange.svg)]()
 
@@ -16,9 +16,9 @@
 
 ---
 
-> "True security is not achieved by hiding systems, but by allowing them to be examined and still remain strong."
+> "True security is not achieved by hiding systems, but by allowing them to be examined — and still remain strong."
 
-⚠️ **Project status: Active development do NOT use in production yet.**
+⚠️ **Project status: Active development — do NOT use in production yet.**
 
 ---
 
@@ -34,12 +34,13 @@ OctaCrypt is built on one belief: **your data belongs to you**.
 
 ---
 
-## ✨ What's New in v0.3.0
+## ✨ What's New in v0.3.1
 
-- ✅ **Directory encryption** — encrypt entire folders preserving structure
-- ✅ **Portable executable** — `.exe` for Windows, binary for Linux/macOS (no Python required)
-- ✅ **GitHub Actions CI/CD** — automated tests on Windows, Linux and macOS
-- ✅ **Security policy** — responsible disclosure process in SECURITY.md
+- 🔧 **Critical bug fix** — ChaCha20-Poly1305 now works correctly in CLI encrypt/decrypt
+- 🖥️ **TUI** — directory encryption added to the menu
+- 🖥️ **TUI** — improved error handling across all flows
+- 📋 **CHANGELOG.md** — full project history documented
+- 🧹 **Code audit** — duplicate code removed, error messages improved
 
 ---
 
@@ -98,6 +99,7 @@ OctaCrypt/
 │   └── workflows/
 │       └── ci.yml            # GitHub Actions CI/CD
 ├── build.py                  # Portable executable build script
+├── CHANGELOG.md              # Full version history
 ├── README.md
 ├── SECURITY.md
 └── pyproject.toml
@@ -184,6 +186,7 @@ octacrypt encrypt document.pdf --alg hybrid --pub recipient_public.pem
 
 # Decrypt
 octacrypt decrypt document.pdf.enc --key mypassword
+octacrypt decrypt document.pdf.enc --alg chacha20 --key mypassword
 octacrypt decrypt document.pdf.enc --alg hybrid --priv mykey_private.pem
 ```
 
@@ -234,6 +237,12 @@ octacrypt sign document.pdf --priv signkey_private.pem
 
 # Verify signature
 octacrypt verify document.pdf --pub signkey_public.pem --sig document.pdf.sig
+
+# Sign a message
+octacrypt sign "hello octagram" --priv signkey_private.pem --message
+
+# Verify a message
+octacrypt verify "hello octagram" --pub signkey_public.pem --signature <hex> --message
 ```
 
 ---
@@ -271,15 +280,18 @@ Tests run automatically on every push via GitHub Actions across:
 - Password-protected private keys
 - Interactive TUI
 
-### v0.3.0 ✅ Current
+### v0.3.x ✅ Current
 - Directory encryption
 - Portable executable (.exe)
 - GitHub Actions CI/CD
 - Security policy
+- Internal code audit
+- CHANGELOG.md
 
 ### v1.0.0 🎯 Planned
+- Post-quantum cryptography (KYBER / ML-KEM, DILITHIUM / ML-DSA)
+- Technical documentation
 - Independent security audit
-- Full documentation
 - Stable API
 - Hardware key support (YubiKey)
 
