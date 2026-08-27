@@ -6,7 +6,8 @@ The following versions currently receive security updates:
 
 | Version | Supported |
 |---------|-----------|
-| 0.3.x   | ✅ Active |
+| 0.4.x   | ✅ Active |
+| 0.3.x   | ❌ No longer supported |
 | 0.2.x   | ❌ No longer supported |
 | 0.1.x   | ❌ No longer supported |
 
@@ -40,7 +41,7 @@ The following are **out of scope**:
 - Vulnerabilities in dependencies without direct exploitability in OctaCrypt
 - Social engineering attacks
 - Physical access attacks
-- Issues in unsupported versions (< 0.3.0)
+- Issues in unsupported versions (< 0.4.0)
 
 ---
 
