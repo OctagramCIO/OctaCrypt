@@ -164,6 +164,8 @@ octacrypt msg-decrypt "base64aqui..." --password mipassword
 2. Elige el tipo:
    - **RSA-4096** → para cifrar archivos para un destinatario específico
    - **Ed25519** → para firmar archivos (verificar que no fueron alterados)
+   - **ML-KEM** → para cifrado post-cuántico (resiste computadoras cuánticas)
+   - **ML-DSA** → para firmas post-cuánticas
 3. Escribe un nombre base (ej: `mikey`)
 4. Elige si proteger la clave privada con contraseña (**recomendado: Sí**)
 5. Se crean dos archivos:
@@ -228,6 +230,44 @@ Guarda el resultado. Si en el futuro el hash cambia, el archivo fue modificado.
 
 ---
 
+## 🔐 Caso 9 — Cifrado y firmas post-cuánticas (resistentes a computadoras cuánticas)
+
+**Objetivo:** proteger tus datos contra futuras computadoras cuánticas, que podrían romper RSA y Ed25519.
+
+### Generar claves post-cuánticas
+
+```bash
+# Clave para cifrado (ML-KEM): pública → cifra, privada → descifra
+octacrypt keygen --type mlkem --out pqenc --prompt-password
+
+# Clave para firmas (ML-DSA)
+octacrypt keygen --type mldsa --out pqsign --prompt-password
+```
+
+### Cifrar y descifrar un archivo para un destinatario
+
+```bash
+# Cifrar con la clave pública ML-KEM del destinatario
+octacrypt pq-encrypt documento.pdf --pub pqenc_public.pem
+
+# Descifrar con tu clave privada ML-KEM
+octacrypt pq-decrypt documento.pdf.pqenc --priv pqenc_private.pem --password tu_contraseña
+```
+
+### Firmar y verificar
+
+```bash
+# Firmar
+octacrypt pq-sign documento.pdf --priv pqsign_private.pem --password tu_contraseña
+
+# Verificar (el destinatario)
+octacrypt pq-verify documento.pdf --pub pqsign_public.pem --sig documento.pdf.pqsig
+```
+
+> ℹ️ Las claves y firmas post-cuánticas son más grandes que las clásicas (una firma ML-DSA-65 ocupa ~3 KB). Esto es normal y es el precio de la resistencia cuántica.
+
+---
+
 ## 🛡️ Consejos de seguridad
 
 - **Usa contraseñas largas y únicas** — mínimo 16 caracteres, mezcla letras, números y símbolos
@@ -245,7 +285,7 @@ Guarda el resultado. Si en el futuro el hash cambia, el archivo fue modificado.
 No hay forma de recuperar los archivos. La contraseña es la única llave. Guárdala en un lugar seguro.
 
 **¿Qué algoritmo debo usar?**
-Para uso general: **AES-256-GCM**. Si usas dispositivos móviles o sin aceleración de hardware: **ChaCha20-Poly1305**. Para enviar a una persona específica: **Híbrido RSA**.
+Para uso general: **AES-256-GCM**. Si usas dispositivos móviles o sin aceleración de hardware: **ChaCha20-Poly1305**. Para enviar a una persona específica: **Híbrido RSA**. Para máxima resistencia al futuro (datos que deben seguir siendo secretos cuando existan computadoras cuánticas): **ML-KEM post-cuántico**. Para firmas a prueba de cuántica: **ML-DSA**.
 
 **¿Puedo abrir el archivo `.enc` en otro programa?**
 No. Solo OctaCrypt puede abrirlos. El formato es propio de OctaCrypt.

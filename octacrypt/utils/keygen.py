@@ -3,6 +3,9 @@
 from cryptography.hazmat.primitives.asymmetric import rsa, ed25519
 from cryptography.hazmat.primitives import serialization
 
+# Importación de los submódulos post-cuánticos (no re-exportados en `asymmetric/__init__`).
+from cryptography.hazmat.primitives.asymmetric import mlkem, mldsa
+
 
 def generate_rsa(bits: int = 2048):
     return rsa.generate_private_key(public_exponent=65537, key_size=bits)
@@ -10,6 +13,34 @@ def generate_rsa(bits: int = 2048):
 
 def generate_ed25519():
     return ed25519.Ed25519PrivateKey.generate()
+
+
+def generate_mlkem(variant: str = "mlkem768"):
+    """
+    Genera una clave privada ML-KEM (post-cuántica, FIPS 203).
+
+    Args:
+        variant: "mlkem768" (recomendado) o "mlkem1024".
+    """
+    if variant not in ("mlkem768", "mlkem1024"):
+        raise ValueError("La variante ML-KEM debe ser 'mlkem768' o 'mlkem1024'.")
+
+    private_class = getattr(mlkem, f"{variant.upper()}PrivateKey")
+    return private_class.generate()
+
+
+def generate_mldsa(variant: str = "mldsa65"):
+    """
+    Genera una clave privada ML-DSA (post-cuántica, FIPS 204).
+
+    Args:
+        variant: "mldsa44", "mldsa65" (recomendado) o "mldsa87".
+    """
+    if variant not in ("mldsa44", "mldsa65", "mldsa87"):
+        raise ValueError("La variante ML-DSA debe ser 'mldsa44', 'mldsa65' o 'mldsa87'.")
+
+    private_class = getattr(mldsa, f"{variant.upper()}PrivateKey")
+    return private_class.generate()
 
 
 def save_keys(private_key, name: str, password: str | None = None):

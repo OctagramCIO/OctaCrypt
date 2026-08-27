@@ -3,6 +3,7 @@
 import pytest
 from octacrypt.core.messenger import MessageCipher
 from octacrypt.algorithms.signer import Ed25519Signer
+from octacrypt.algorithms.mlkem import MLKEMCipher
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 
@@ -20,6 +21,11 @@ def rsa_keypair():
         format=serialization.PublicFormat.SubjectPublicKeyInfo,
     )
     return private_pem, public_pem
+
+
+@pytest.fixture(scope="module")
+def mlkem_keypair():
+    return MLKEMCipher.generate_keypair(variant="mlkem768")
 
 
 @pytest.fixture(scope="module")
@@ -105,6 +111,45 @@ def test_hybrid_with_signature(rsa_keypair, ed25519_keypair):
     decrypted = MessageCipher.decrypt_hybrid(encrypted, private_pem, verifier=verifier)
 
     assert decrypted == msg
+
+
+# ─── Post-cuántico ────────────────────────────────────────
+
+def test_pq_encrypt_decrypt(mlkem_keypair):
+    private_pem, public_pem = mlkem_keypair
+    msg = b"Mensaje post-cuantico ML-KEM + AES"
+
+    encrypted = MessageCipher.encrypt_pq(msg, public_pem)
+    decrypted = MessageCipher.decrypt_pq(encrypted, private_pem)
+
+    assert decrypted == msg
+
+
+def test_pq_with_signature(mlkem_keypair, ed25519_keypair):
+    private_pem, public_pem = mlkem_keypair
+    sign_priv, sign_pub = ed25519_keypair
+
+    signer = Ed25519Signer(private_key_pem=sign_priv)
+    verifier = Ed25519Signer(public_key_pem=sign_pub)
+
+    msg = b"cifrado, firmado y post-cuantico"
+    encrypted = MessageCipher.encrypt_pq(msg, public_pem, signer=signer)
+    decrypted = MessageCipher.decrypt_pq(encrypted, private_pem, verifier=verifier)
+
+    assert decrypted == msg
+
+
+def test_pq_tampered_signature_raises(mlkem_keypair, ed25519_keypair):
+    private_pem, public_pem = mlkem_keypair
+    sign_priv, _ = ed25519_keypair
+    _, other_public_pem = Ed25519Signer.generate_keypair()
+
+    signer = Ed25519Signer(private_key_pem=sign_priv)
+    wrong_verifier = Ed25519Signer(public_key_pem=other_public_pem)
+
+    encrypted = MessageCipher.encrypt_pq(b"test", public_pem, signer=signer)
+    with pytest.raises(ValueError, match="Firma inválida"):
+        MessageCipher.decrypt_pq(encrypted, private_pem, verifier=wrong_verifier)
 
 
 # ─── Base64 ──────────────────────────────────────────────

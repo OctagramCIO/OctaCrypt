@@ -26,7 +26,7 @@ OctaCrypt is currently in **active development** and has **not been independentl
 
 The following are considered **in scope** for security reports:
 
-- Cryptographic implementation flaws (AES-GCM, ChaCha20-Poly1305, RSA-OAEP, Ed25519)
+- Cryptographic implementation flaws (AES-GCM, ChaCha20-Poly1305, RSA-OAEP, Ed25519, ML-KEM, ML-DSA)
 - Key derivation weaknesses (PBKDF2 configuration)
 - Private key exposure or mishandling
 - Authentication bypass in any module
@@ -90,7 +90,9 @@ OctaCrypt uses the following algorithms and configurations:
 | Symmetric encryption | AES-256-GCM | 256-bit key, 96-bit nonce, 128-bit tag |
 | Symmetric encryption | ChaCha20-Poly1305 | 256-bit key, 96-bit nonce, 128-bit tag |
 | Asymmetric encryption | RSA-OAEP + SHA-256 | Minimum 2048-bit keys, recommended 4096 |
+| **Post-quantum encryption** | **ML-KEM-768 / ML-KEM-1024** | FIPS 203 — hybrid with AES-256-GCM |
 | Digital signatures | Ed25519 | 256-bit security level |
+| **Post-quantum signatures** | **ML-DSA-44 / ML-DSA-65 / ML-DSA-87** | FIPS 204 |
 | Key derivation | PBKDF2-HMAC-SHA256 | 200,000 iterations, 128-bit salt |
 | Password hashing | bcrypt / scrypt | Adaptive cost factors |
 | Private key storage | AES-256-CBC | PKCS#8 with BestAvailableEncryption |
@@ -107,8 +109,8 @@ The following are known limitations, not bugs:
 - Key management is the user's responsibility — lost keys mean lost data
 - The TUI does not currently support hardware security keys (YubiKey, etc.)
 - No forward secrecy in file encryption (planned for v1.0)
-- No post-quantum cryptography yet (planned for v1.0 — ML-KEM / ML-DSA)
 - Directory encryption does not support streaming for very large files
+- Post-quantum keys and ciphertexts are larger than their classical counterparts (ML-KEM-768 public keys are 1,184 bytes; ML-DSA-65 signatures ~3.3 KB)
 
 ---
 

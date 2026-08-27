@@ -6,12 +6,14 @@
 # Modos:
 #   - Simétrico: AES-256-GCM con KDF (password → key)
 #   - Híbrido:   RSA-OAEP + AES-256-GCM (clave pública/privada)
+#   - Post-cuántico: ML-KEM + AES-256-GCM (clave pública/privada)
 #   - Con firma: cifrado + firma Ed25519 opcional
 
 import base64
 
 from octacrypt.algorithms.aes import AESAlgorithm
 from octacrypt.algorithms.hybrid import HybridCipher
+from octacrypt.algorithms.mlkem import MLKEMCipher
 from octacrypt.algorithms.signer import Ed25519Signer
 from octacrypt.utils.kdf import derive_key, generate_salt
 
@@ -27,7 +29,8 @@ class MessageCipher:
     Soporta:
       - Modo simétrico (password)
       - Modo híbrido (RSA)
-      - Firma Ed25519 opcional en ambos modos
+      - Modo post-cuántico (ML-KEM)
+      - Firma Ed25519 opcional en todos los modos
 
     Todos los outputs son bytes crudos.
     Usa to_base64() / from_base64() para texto imprimible.
@@ -161,6 +164,69 @@ class MessageCipher:
             payload = data
 
         cipher = HybridCipher(
+            private_key_pem=private_key_pem,
+            private_key_password=private_key_password,
+        )
+        return cipher.decrypt(payload)
+
+    # ------------------------------------------------------------------
+    # Post-cuántico: ML-KEM + AES-256-GCM
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def encrypt_pq(
+        message: bytes | str,
+        public_key_pem: bytes,
+        signer: Ed25519Signer | None = None,
+    ) -> bytes:
+        """
+        Cifra un mensaje con cifrado híbrido ML-KEM + AES-256-GCM (post-cuántico).
+
+        Args:
+            message:        Texto o bytes a cifrar.
+            public_key_pem: Clave pública ML-KEM en PEM.
+            signer:         Ed25519Signer opcional para firmar.
+        """
+        if isinstance(message, str):
+            message = message.encode()
+
+        cipher = MLKEMCipher(public_key_pem=public_key_pem)
+        payload = cipher.encrypt(message)
+
+        if signer:
+            signature = signer.sign(payload)
+            payload = payload + _SIG_SEPARATOR + signature
+
+        return payload
+
+    @staticmethod
+    def decrypt_pq(
+        data: bytes,
+        private_key_pem: bytes,
+        private_key_password: bytes | None = None,
+        verifier: Ed25519Signer | None = None,
+    ) -> bytes:
+        """
+        Descifra un mensaje cifrado con encrypt_pq.
+
+        Args:
+            data:                 Bytes cifrados.
+            private_key_pem:      Clave privada ML-KEM en PEM.
+            private_key_password: Contraseña de la clave privada (si aplica).
+            verifier:             Ed25519Signer con clave pública para verificar.
+
+        Raises:
+            ValueError: Si la firma es inválida.
+        """
+        if _SIG_SEPARATOR in data:
+            payload, signature = data.split(_SIG_SEPARATOR, 1)
+            if verifier:
+                if not verifier.verify(payload, signature):
+                    raise ValueError("❌ Firma inválida — mensaje comprometido.")
+        else:
+            payload = data
+
+        cipher = MLKEMCipher(
             private_key_pem=private_key_pem,
             private_key_password=private_key_password,
         )

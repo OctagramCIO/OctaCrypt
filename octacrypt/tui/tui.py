@@ -24,7 +24,7 @@ STYLE = Style([
     ("instruction",  "fg:#888888"),
 ])
 
-VERSION = "0.3.0"
+VERSION = "0.4.0"
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -122,11 +122,26 @@ def menu_file_encrypt():
         "AES-256-GCM (recomendado)",
         "ChaCha20-Poly1305 (mas rapido en moviles)",
         "Hibrido RSA + AES (para un destinatario)",
+        "Post-cuantico ML-KEM + AES (resiste computadoras cuanticas)",
     ], style=STYLE).ask()
     if alg is None:
         return
 
-    if "Hibrido" in alg:
+    if "Post-cuantico" in alg:
+        pub_key = ask_file("Clave publica ML-KEM (.pem):")
+        if not pub_key:
+            return
+        from octacrypt.algorithms.mlkem import MLKEMCipher
+        output_path = input_file.with_suffix(input_file.suffix + ".pqenc")
+        try:
+            cipher = MLKEMCipher(public_key_pem=pub_key.read_bytes())
+            output_path.write_bytes(cipher.encrypt(input_file.read_bytes()))
+            success("Archivo cifrado con ML-KEM + AES-256-GCM (post-cuantico)")
+            info(f"Salida: {output_path}")
+            info(f"Tamano: {fmt_bytes(output_path.stat().st_size)}")
+        except Exception as e:
+            error(f"No se pudo cifrar: {e}")
+    elif "Hibrido" in alg:
         pub_key = ask_file("Clave publica RSA (.pem):")
         if not pub_key:
             return
@@ -166,11 +181,33 @@ def menu_file_decrypt():
     mode = questionary.select("Modo:", choices=[
         "Simetrico (password)",
         "Hibrido RSA (clave privada)",
+        "Post-cuantico ML-KEM (clave privada)",
     ], style=STYLE).ask()
     if mode is None:
         return
 
-    if "Hibrido" in mode:
+    if "Post-cuantico" in mode:
+        priv_key = ask_file("Clave privada ML-KEM (.pem):")
+        if not priv_key:
+            return
+        pw = ask_password("Contrasena de la clave privada (Enter si no tiene):")
+        output_path = (
+            input_file.with_suffix("") if input_file.suffix == ".pqenc"
+            else input_file.with_suffix(".dec")
+        )
+        from octacrypt.algorithms.mlkem import MLKEMCipher
+        try:
+            pw_bytes = pw.encode() if pw else None
+            cipher = MLKEMCipher(
+                private_key_pem=priv_key.read_bytes(),
+                private_key_password=pw_bytes,
+            )
+            output_path.write_bytes(cipher.decrypt(input_file.read_bytes()))
+            success("Archivo descifrado correctamente (ML-KEM post-cuantico)")
+            info(f"Salida: {output_path}")
+        except Exception as e:
+            error(f"No se pudo descifrar: {e}")
+    elif "Hibrido" in mode:
         priv_key = ask_file("Clave privada RSA (.pem):")
         if not priv_key:
             return
@@ -289,13 +326,22 @@ def menu_message():
             return
 
         mode = questionary.select(
-            "Modo:", choices=["Simetrico (password)", "Hibrido RSA (clave publica)"], style=STYLE
+            "Modo:", choices=[
+                "Simetrico (password)",
+                "Hibrido RSA (clave publica)",
+                "Post-cuantico ML-KEM (clave publica)",
+            ], style=STYLE
         ).ask()
         if mode is None:
             return
 
         try:
-            if "Hibrido" in mode:
+            if "Post-cuantico" in mode:
+                pub_key = ask_file("Clave publica ML-KEM (.pem):")
+                if not pub_key:
+                    return
+                encrypted = MessageCipher.encrypt_pq(message, pub_key.read_bytes())
+            elif "Hibrido" in mode:
                 pub_key = ask_file("Clave publica RSA (.pem):")
                 if not pub_key:
                     return
@@ -326,7 +372,11 @@ def menu_message():
             return
 
         mode = questionary.select(
-            "Modo:", choices=["Simetrico (password)", "Hibrido RSA (clave privada)"], style=STYLE
+            "Modo:", choices=[
+                "Simetrico (password)",
+                "Hibrido RSA (clave privada)",
+                "Post-cuantico ML-KEM (clave privada)",
+            ], style=STYLE
         ).ask()
         if mode is None:
             return
@@ -339,7 +389,16 @@ def menu_message():
             return
 
         try:
-            if "Hibrido" in mode:
+            if "Post-cuantico" in mode:
+                priv_key = ask_file("Clave privada ML-KEM (.pem):")
+                if not priv_key:
+                    return
+                pw = ask_password("Contrasena de la clave privada (Enter si no tiene):")
+                pw_bytes = pw.encode() if pw else None
+                plaintext = MessageCipher.decrypt_pq(
+                    data, priv_key.read_bytes(), private_key_password=pw_bytes
+                )
+            elif "Hibrido" in mode:
                 priv_key = ask_file("Clave privada RSA (.pem):")
                 if not priv_key:
                     return
@@ -364,32 +423,45 @@ def menu_message():
 
 
 def menu_sign():
-    console.print(Panel("[bold green]Firmas Digitales Ed25519[/bold green]", box=box.ROUNDED))
+    console.print(Panel("[bold green]Firmas Digitales[/bold green]", box=box.ROUNDED))
     action = questionary.select(
-        "Accion:", choices=["Firmar archivo", "Verificar firma"], style=STYLE
+        "Accion:", choices=[
+            "Firmar archivo",
+            "Verificar firma",
+            "Firmar archivo (ML-DSA post-cuantico)",
+            "Verificar firma (ML-DSA post-cuantico)",
+        ], style=STYLE
     ).ask()
     if action is None:
         return
 
-    from octacrypt.algorithms.signer import Ed25519Signer
+    post_quantum = "ML-DSA" in action
+    label = "ML-DSA" if post_quantum else "Ed25519"
+
+    if post_quantum:
+        from octacrypt.algorithms.mldsa import MLDSASigner as SignerClass
+        sig_ext = ".pqsig"
+    else:
+        from octacrypt.algorithms.signer import Ed25519Signer as SignerClass
+        sig_ext = ".sig"
 
     if "Firmar" in action:
         target = ask_file("Archivo a firmar:")
         if not target:
             return
-        priv_key = ask_file("Clave privada Ed25519 (.pem):")
+        priv_key = ask_file(f"Clave privada {label} (.pem):")
         if not priv_key:
             return
         pw = ask_password("Contrasena de la clave privada (Enter si no tiene):")
         try:
             pw_bytes = pw.encode() if pw else None
-            signer = Ed25519Signer(
+            signer = SignerClass(
                 private_key_pem=priv_key.read_bytes(),
                 private_key_password=pw_bytes,
             )
-            sig_path = target.with_suffix(target.suffix + ".sig")
+            sig_path = target.with_suffix(target.suffix + sig_ext)
             sig_path.write_bytes(signer.sign(target.read_bytes()))
-            success("Archivo firmado con Ed25519")
+            success(f"Archivo firmado con {label}")
             info(f"Firma guardada en: {sig_path}")
         except Exception as e:
             error(f"No se pudo firmar: {e}")
@@ -397,19 +469,19 @@ def menu_sign():
         target = ask_file("Archivo a verificar:")
         if not target:
             return
-        sig_file = ask_file("Archivo de firma (.sig):")
+        sig_file = ask_file(f"Archivo de firma ({sig_ext}):")
         if not sig_file:
             return
-        pub_key = ask_file("Clave publica Ed25519 (.pem):")
+        pub_key = ask_file(f"Clave publica {label} (.pem):")
         if not pub_key:
             return
         try:
-            verifier = Ed25519Signer(public_key_pem=pub_key.read_bytes())
+            verifier = SignerClass(public_key_pem=pub_key.read_bytes())
             valid = verifier.verify(target.read_bytes(), sig_file.read_bytes())
             if valid:
-                success("Firma VALIDA — contenido integro.")
+                success(f"Firma {label} VALIDA — contenido integro.")
             else:
-                error("Firma INVALIDA — contenido puede haber sido manipulado.")
+                error(f"Firma {label} INVALIDA — contenido puede haber sido manipulado.")
         except Exception as e:
             error(f"Error al verificar: {e}")
     pause()
@@ -420,6 +492,9 @@ def menu_keygen():
     key_type = questionary.select("Tipo de clave:", choices=[
         "RSA-4096 (para cifrado hibrido)",
         "Ed25519 (para firmas digitales)",
+        "ML-KEM-768 (post-cuantico, para cifrado)",
+        "ML-KEM-1024 (post-cuantico, maximo nivel)",
+        "ML-DSA-65 (post-cuantico, para firmas)",
     ], style=STYLE).ask()
     if key_type is None:
         return
@@ -448,11 +523,26 @@ def menu_keygen():
             pause()
             return
 
-    from octacrypt.utils.keygen import generate_rsa, generate_ed25519, save_keys
+    from octacrypt.utils.keygen import (
+        generate_rsa,
+        generate_ed25519,
+        generate_mlkem,
+        generate_mldsa,
+        save_keys,
+    )
     try:
         if "RSA" in key_type:
             info("Generando RSA-4096... (puede tomar unos segundos)")
             private_key = generate_rsa(4096)
+        elif "ML-KEM-768" in key_type:
+            info("Generando ML-KEM-768... (post-cuantico)")
+            private_key = generate_mlkem("mlkem768")
+        elif "ML-KEM-1024" in key_type:
+            info("Generando ML-KEM-1024... (post-cuantico)")
+            private_key = generate_mlkem("mlkem1024")
+        elif "ML-DSA" in key_type:
+            info("Generando ML-DSA-65... (post-cuantico)")
+            private_key = generate_mldsa("mldsa65")
         else:
             private_key = generate_ed25519()
 
@@ -517,6 +607,8 @@ def show_about():
     table.add_row("ChaCha20-Poly1305",     "[green]activo[/green]")
     table.add_row("RSA-OAEP + AES",        "[green]activo[/green]")
     table.add_row("Ed25519",               "[green]activo[/green]")
+    table.add_row("ML-KEM + AES (cuantico)",   "[green]activo[/green]")
+    table.add_row("ML-DSA (cuantico)",         "[green]activo[/green]")
     table.add_row("PBKDF2 (200k it.)",     "[green]activo[/green]")
     table.add_row("bcrypt / scrypt",       "[green]activo[/green]")
     table.add_row("Cifrado directorios",   "[green]activo[/green]")

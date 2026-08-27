@@ -137,6 +137,8 @@ jobs:
           python -c "from octacrypt.algorithms.aes import AESAlgorithm; print('AES OK')"
           python -c "from octacrypt.algorithms.chacha import ChaChaAlgorithm; print('ChaCha20 OK')"
           python -c "from octacrypt.algorithms.signer import Ed25519Signer; print('Ed25519 OK')"
+          python -c "from octacrypt.algorithms.mlkem import MLKEMCipher; print('ML-KEM OK')"
+          python -c "from octacrypt.algorithms.mldsa import MLDSASigner; print('ML-DSA OK')"
           python -c "from octacrypt.core.dir_crypto import encrypt_directory; print('DirCrypto OK')"
 
       - name: Verify CLI entry points work

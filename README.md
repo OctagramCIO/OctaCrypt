@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://python.org)
-[![Version](https://img.shields.io/badge/Version-0.3.1-brightgreen.svg)]()
+[![Version](https://img.shields.io/badge/Version-0.4.0-brightgreen.svg)]()
 [![CI](https://github.com/OctagramCIO/OctaCrypt/actions/workflows/ci.yml/badge.svg)](https://github.com/OctagramCIO/OctaCrypt/actions)
 [![Status](https://img.shields.io/badge/Status-Active%20Development-orange.svg)]()
 
@@ -36,13 +36,14 @@ OctaCrypt is built on one belief: **your data belongs to you**.
 
 ---
 
-## ✨ What's New in v0.3.1
+## ✨ What's New in v0.4.0
 
-- 🔧 **Critical bug fix** — ChaCha20-Poly1305 now works correctly in CLI encrypt/decrypt
-- 🖥️ **TUI** — directory encryption added to the menu
-- 🖥️ **TUI** — improved error handling across all flows
-- 📋 **CHANGELOG.md** — full project history documented
-- 🧹 **Code audit** — duplicate code removed, error messages improved
+- 🔐 **Post-quantum cryptography** — ML-KEM (FIPS 203) + AES-256-GCM hybrid encryption
+- 🔏 **Post-quantum signatures** — ML-DSA (FIPS 204)
+- 🗝️ **Keygen** — new key types `mlkem` and `mldsa` (with `--variant`)
+- 🖥️ **CLI** — new commands `pq-encrypt`, `pq-decrypt`, `pq-sign`, `pq-verify`
+- ✉️ **Messages** — post-quantum modes in `msg-encrypt` / `msg-decrypt` (`--pub-pq` / `--priv-pq`)
+- 🖥️ **TUI** — post-quantum options across file, message, sign and keygen menus
 
 ---
 
@@ -54,7 +55,9 @@ OctaCrypt is built on one belief: **your data belongs to you**.
 | Symmetric encryption | ChaCha20-Poly1305 | RFC 8439 |
 | Asymmetric encryption | RSA-OAEP (SHA-256) | PKCS#1 v2.2 |
 | Hybrid encryption | RSA-OAEP + AES-256-GCM | — |
+| **Post-quantum encryption** | **ML-KEM-768 / ML-KEM-1024 + AES-256-GCM** | **NIST FIPS 203** |
 | Digital signatures | Ed25519 | RFC 8032 |
+| **Post-quantum signatures** | **ML-DSA-44 / ML-DSA-65 / ML-DSA-87** | **NIST FIPS 204** |
 | Key derivation | PBKDF2-HMAC-SHA256 (200k iter.) | NIST SP 800-132 |
 | Password hashing | bcrypt / scrypt | — |
 | File integrity | SHA-256 / SHA-512 | NIST FIPS 180-4 |
@@ -71,12 +74,14 @@ OctaCrypt/
 │   │   ├── aes.py            # AES-256-GCM
 │   │   ├── chacha.py         # ChaCha20-Poly1305
 │   │   ├── hybrid.py         # RSA-OAEP + AES-256-GCM
+│   │   ├── mlkem.py          # ML-KEM (FIPS 203) + AES-256-GCM (post-cuántico)
+│   │   ├── mldsa.py          # ML-DSA (FIPS 204) signatures (post-cuántico)
 │   │   └── signer.py         # Ed25519 signatures
 │   ├── core/
 │   │   ├── crypto_engine.py  # Central engine (AES + ChaCha20)
 │   │   ├── crypto.py         # File encrypt/decrypt
 │   │   ├── dir_crypto.py     # Directory encrypt/decrypt
-│   │   └── messenger.py      # Message encrypt/decrypt + signing
+│   │   └── messenger.py      # Message encrypt/decrypt + signing + PQ
 │   ├── cli/
 │   │   ├── cli.py            # Main CLI entry point
 │   │   ├── cli_entry.py      # Entry point for portable executable
@@ -84,6 +89,7 @@ OctaCrypt/
 │   │   ├── decrypt.py        # octacrypt decrypt
 │   │   ├── encrypt_dir.py    # octacrypt encrypt-dir / decrypt-dir
 │   │   ├── hybrid.py         # octacrypt hybrid-encrypt/decrypt
+│   │   ├── pq.py             # octacrypt pq-encrypt/decrypt/sign/verify
 │   │   ├── sign.py           # octacrypt sign/verify
 │   │   ├── message.py        # octacrypt msg-encrypt/decrypt
 │   │   ├── hash.py           # octacrypt hash
@@ -170,6 +176,19 @@ octacrypt keygen --type rsa --bits 4096 --out mykey --prompt-password
 
 # Ed25519 keypair
 octacrypt keygen --type ed25519 --out signkey --prompt-password
+
+# ML-KEM-768 keypair (post-quantum encryption)
+octacrypt keygen --type mlkem --out pqenc --prompt-password
+
+# ML-KEM-1024 keypair (maximum security)
+octacrypt keygen --type mlkem --variant mlkem1024 --out pqenc --prompt-password
+
+# ML-DSA-65 keypair (post-quantum signatures)
+octacrypt keygen --type mldsa --out pqsign --prompt-password
+
+# ML-DSA-44 / ML-DSA-87 keypairs
+octacrypt keygen --type mldsa --variant mldsa44 --out pqsign --prompt-password
+octacrypt keygen --type mldsa --variant mldsa87 --out pqsign --prompt-password
 ```
 
 ---
@@ -190,6 +209,24 @@ octacrypt encrypt document.pdf --alg hybrid --pub recipient_public.pem
 octacrypt decrypt document.pdf.enc --key mypassword
 octacrypt decrypt document.pdf.enc --alg chacha20 --key mypassword
 octacrypt decrypt document.pdf.enc --alg hybrid --priv mykey_private.pem
+```
+
+---
+
+### 🔐 Post-Quantum File Encryption (ML-KEM + AES)
+
+```bash
+# Encrypt with ML-KEM-768 public key (resistant to quantum computers)
+octacrypt pq-encrypt document.pdf --pub pqenc_public.pem
+
+# Decrypt
+octacrypt pq-decrypt document.pdf.pqenc --priv pqenc_private.pem --password mypassword
+
+# Sign with ML-DSA (post-quantum)
+octacrypt pq-sign document.pdf --priv pqsign_private.pem --password mypassword
+
+# Verify
+octacrypt pq-verify document.pdf --pub pqsign_public.pem --sig document.pdf.pqsig
 ```
 
 ---
@@ -219,11 +256,17 @@ octacrypt msg-encrypt "top secret message" --password mypassword
 # Hybrid RSA
 octacrypt msg-encrypt "top secret" --pub recipient_public.pem
 
+# Post-quantum (ML-KEM)
+octacrypt msg-encrypt "top secret" --pub-pq pqenc_public.pem
+
 # With Ed25519 signature
 octacrypt msg-encrypt "top secret" --password pw --sign-priv signkey_private.pem
 
 # Decrypt
 octacrypt msg-decrypt "<base64>" --password mypassword
+
+# Decrypt post-quantum (with password-protected private key)
+octacrypt msg-decrypt "<base64>" --priv-pq pqenc_private.pem --priv-password mypassword
 
 # Decrypt + verify signature
 octacrypt msg-decrypt "<base64>" --password pw --verify-pub signkey_public.pem
@@ -282,7 +325,7 @@ Tests run automatically on every push via GitHub Actions across:
 - Password-protected private keys
 - Interactive TUI
 
-### v0.3.x ✅ Current
+### v0.3.x ✅
 - Directory encryption
 - Portable executable (.exe)
 - GitHub Actions CI/CD
@@ -290,8 +333,13 @@ Tests run automatically on every push via GitHub Actions across:
 - Internal code audit
 - CHANGELOG.md
 
+### v0.4.0 ✅ Current
+- Post-quantum cryptography: ML-KEM (FIPS 203) encryption
+- Post-quantum signatures: ML-DSA (FIPS 204)
+- Keygen for ML-KEM / ML-DSA keys
+- CLI + TUI support for post-quantum operations
+
 ### v1.0.0 🎯 Planned
-- Post-quantum cryptography (KYBER / ML-KEM, DILITHIUM / ML-DSA)
 - Technical documentation
 - Independent security audit
 - Stable API

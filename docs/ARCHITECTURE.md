@@ -18,7 +18,8 @@ OctaCrypt is structured as a layered toolkit:
 │         dir_crypto · kdf                │
 ├─────────────────────────────────────────┤
 │           Algorithm Layer               │
-│   AES-GCM · ChaCha20 · Hybrid · Signer │
+│   AES-GCM · ChaCha20 · Hybrid · MLKEM  │
+│        MLDSA · Signer                   │
 ├─────────────────────────────────────────┤
 │           Utilities Layer               │
 │     keygen · hash · kdf · logger        │
@@ -127,6 +128,48 @@ Ed25519 is a modern elliptic curve signature scheme offering:
 
 **Auto-derivation of public key:**
 When a private key is loaded, `Ed25519Signer` automatically derives the public key from it. This means you can sign and verify with only the private key loaded.
+
+---
+
+### ML-KEM + AES-256-GCM Hybrid (`algorithms/mlkem.py`)
+
+**Why hybrid encryption with ML-KEM?**
+
+ML-KEM is a Key Encapsulation Mechanism: it does not encrypt data directly. We use it exactly like the RSA hybrid — the sender *encapsulates* a fresh 32-byte shared secret using the recipient's public key, encrypts the data with AES-256-GCM using that secret, and sends the KEM ciphertext alongside.
+
+**Flow:**
+```
+Encrypt:
+  1. Encapsulate a fresh 32-byte shared secret with the recipient's public ML-KEM key
+  2. Encrypt data with AES-256-GCM using the shared secret
+  3. Output: [2B ct_len][KEM ciphertext][12B nonce][ciphertext+tag]
+
+Decrypt:
+  1. Decapsulate the shared secret with the private ML-KEM key
+  2. Decrypt data with AES-256-GCM using the recovered secret
+```
+
+**Security properties:**
+- The KEM shared secret is uniformly random and used directly as the AES-256 key
+- Decapsulation with the wrong key yields a *different* shared secret → the AES-GCM tag fails → tampering/wrong-key is always detected
+- NIST FIPS 203, quantum-resistant (Module-Lattice problem)
+- Variants: `mlkem768` (default, recommended) and `mlkem1024`
+
+**Why not use ML-KEM directly for data?** The KEM establishes a shared secret between two parties; AEAD (AES-GCM) is required to actually encrypt arbitrary-sized data with confidentiality and integrity.
+
+---
+
+### ML-DSA Signatures (`algorithms/mldsa.py`)
+
+**Why ML-DSA?**
+
+ML-DSA is the NIST FIPS 204 post-quantum signature standard (based on CRYSTALS-Dilithium). It provides lattice-based signatures resistant to Shor's algorithm and its generalizations.
+
+- Ed25519, like all discrete-log/elliptic-curve systems, is broken by Shor's algorithm
+- ML-DSA-65 (~192-bit) is the recommended general-purpose parameter set
+- Signatures are **probabilistic** — two signatures of the same message differ; verification, not string comparison, is the correct check
+
+**Design mirrors `Ed25519Signer`**: the `MLDSASigner` class exposes `generate_keypair`, `sign`, and `verify` with the same semantics, and auto-derives the public key from a loaded private key.
 
 ---
 
@@ -247,8 +290,11 @@ OctaCrypt does NOT currently protect against:
 
 - **Compromised endpoints** — if your machine is infected, all bets are off
 - **Metadata analysis** — file names and sizes are visible in directory manifests
-- **Quantum computers** — post-quantum algorithms are planned for v1.0
 - **Forward secrecy** — if a key is compromised, past messages can be decrypted
+
+OctaCrypt DOES protect against:
+
+- **Quantum adversaries** — ML-KEM (encryption) and ML-DSA (signatures) are used to future-proof operations against attacks from cryptographically relevant quantum computers
 
 ---
 
@@ -256,7 +302,7 @@ OctaCrypt does NOT currently protect against:
 
 | Library | Purpose | Why this library |
 |---|---|---|
-| `cryptography` | All cryptographic primitives | Industry standard, maintained by PyCA, FIPS-validated |
+| `cryptography` (>=47) | All cryptographic primitives, incl. ML-KEM / ML-DSA | Industry standard, maintained by PyCA |
 | `click` | CLI framework | Clean API, good help text generation |
 | `rich` | Terminal UI rendering | Best Python terminal formatting library |
 | `questionary` | Interactive TUI prompts | Clean API, keyboard navigation |

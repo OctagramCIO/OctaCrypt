@@ -4,6 +4,51 @@ Quick reference for every cryptographic primitive used in OctaCrypt, with parame
 
 ---
 
+## Post-Quantum Cryptography
+
+### ML-KEM (FIPS 203) — Key Encapsulation Mechanism
+
+| Parameter | ML-KEM-768 | ML-KEM-1024 |
+|---|---|---|
+| Security level | ~192-bit | ~256-bit |
+| Public key (raw) | 1,184 bytes | 1,568 bytes |
+| Private key (raw) | 2,400 bytes | 3,168 bytes |
+| Ciphertext per encapsulation | 1,088 bytes | 1,568 bytes |
+| Shared secret | 32 bytes (AES-256 key) | 32 bytes |
+| Standard | NIST FIPS 203 | NIST FIPS 203 |
+
+**Key properties:**
+- Post-quantum secure — based on the Module-Lattice Learning With Errors (MLWE) problem
+- Used only to *encapsulate* the AES session key (hybrid mode with AES-256-GCM)
+- ML-KEM-768 is **NIST's recommended** general-purpose parameter set
+- Decapsulation with the wrong key always succeeds but produces a *different* shared secret — integrity is enforced by the AES-GCM authentication tag
+
+**Hybrid usage (`pq-encrypt` / `MLKEMCipher.encrypt`):**
+```
+[2B KEM ciphertext length][KEM ciphertext][12B nonce][AES-256-GCM ciphertext + tag]
+```
+
+---
+
+### ML-DSA (FIPS 204) — Digital Signatures
+
+| Parameter | ML-DSA-44 | ML-DSA-65 | ML-DSA-87 |
+|---|---|---|---|
+| Security level | ~128-bit | ~192-bit | ~256-bit |
+| Public key (raw) | 1,312 bytes | 1,952 bytes | 2,592 bytes |
+| Signature size (approx) | 2,420 bytes | 3,309 bytes | 4,627 bytes |
+| Standard | NIST FIPS 204 | NIST FIPS 204 | NIST FIPS 204 |
+
+**Key properties:**
+- Post-quantum secure — based on the Module-Lattice Discrete Logarithm problem
+- **Probabilistic** — the same message produces a *different* signature each time (unlike Ed25519)
+- ML-DSA-65 is **NIST's recommended** general-purpose parameter set
+- Supports optional context separation in some implementations
+
+**Verification:** a valid ML-DSA signature proves that the signer holds the private key and that the message has not been modified since signing, with resistance to quantum adversaries.
+
+---
+
 ## Symmetric Encryption
 
 ### AES-256-GCM
@@ -210,7 +255,12 @@ All random values in OctaCrypt (nonces, salts, session keys) are generated using
 | ChaCha20-Poly1305 | 128-bit | ~128-bit |
 | RSA-4096 | ~140-bit | ❌ Broken by Shor's algorithm |
 | Ed25519 | 128-bit | ❌ Broken by Shor's algorithm |
+| ML-KEM-768 | 192-bit | ✅ Strong (FFLWE/MLWE, quantum-resistant) |
+| ML-KEM-1024 | 256-bit | ✅ Strong (quantum-resistant) |
+| ML-DSA-44 | 128-bit | ✅ Strong (quantum-resistant) |
+| ML-DSA-65 | 192-bit | ✅ Strong (quantum-resistant) |
+| ML-DSA-87 | 256-bit | ✅ Strong (quantum-resistant) |
 | PBKDF2-HMAC-SHA256 | Password-dependent | Partially resistant |
 
-**Post-quantum note:** RSA and Ed25519 are vulnerable to quantum computers running Shor's algorithm. OctaCrypt plans to add ML-KEM (KYBER) and ML-DSA (DILITHIUM) in v1.0 as quantum-resistant alternatives.
+**Post-quantum note:** RSA and Ed25519 are vulnerable to quantum computers running Shor's algorithm. OctaCrypt ships ML-KEM (FIPS 203) for encryption and ML-DSA (FIPS 204) for signatures as quantum-resistant alternatives: use `keygen --type mlkem`/`--type mldsa`, `pq-encrypt`/`pq-decrypt`, and `pq-sign`/`pq-verify` for future-proof operations.
 
