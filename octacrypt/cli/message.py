@@ -11,7 +11,8 @@ from octacrypt.algorithms.signer import Ed25519Signer
 @click.option("--pub", "pub_key", default=None, help="Cifrado híbrido con clave pública RSA")
 @click.option("--pub-pq", "pub_pq_key", default=None, help="Cifrado post-cuántico con clave pública ML-KEM")
 @click.option("--sign-priv", default=None, help="Clave privada Ed25519 para firmar (opcional)")
-def msg_encrypt(message, password, pub_key, pub_pq_key, sign_priv):
+@click.option("--sign-password", default=None, help="Password de la clave de firma (si está cifrada)")
+def msg_encrypt(message, password, pub_key, pub_pq_key, sign_priv, sign_password):
     """
     Cifra un mensaje de texto.
 
@@ -28,7 +29,7 @@ def msg_encrypt(message, password, pub_key, pub_pq_key, sign_priv):
         octacrypt msg-encrypt "secreto" --pub-pq pq_public.pem
 
       Con firma:
-        octacrypt msg-encrypt "secreto" --password pw --sign-priv sign_private.pem
+        octacrypt msg-encrypt "secreto" --password pw --sign-priv sign_private.pem --sign-password sp
     """
     if not password and not pub_key and not pub_pq_key:
         raise click.ClickException("Debes usar --password, --pub o --pub-pq para cifrar.")
@@ -39,7 +40,10 @@ def msg_encrypt(message, password, pub_key, pub_pq_key, sign_priv):
         priv_path = Path(sign_priv)
         if not priv_path.exists():
             raise click.ClickException(f"Clave de firma no encontrada: {priv_path}")
-        signer = Ed25519Signer(private_key_pem=priv_path.read_bytes())
+        signer = Ed25519Signer(
+            private_key_pem=priv_path.read_bytes(),
+            private_key_password=sign_password.encode() if sign_password else None,
+        )
 
     if password:
         encrypted = MessageCipher.encrypt_symmetric(message, password, signer=signer)

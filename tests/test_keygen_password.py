@@ -1,9 +1,7 @@
 # tests/test_keygen_password.py
 
 import pytest
-import os
 import tempfile
-from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from octacrypt.utils.keygen import (
     generate_rsa,
     generate_ed25519,

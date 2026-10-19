@@ -9,24 +9,28 @@ from octacrypt.algorithms.signer import Ed25519Signer
 @click.command("sign")
 @click.argument("target")
 @click.option("--priv", "priv_key", required=True, help="Clave privada Ed25519 (.pem)")
+@click.option("--password", default=None, help="Password de la clave privada (si está cifrada)")
 @click.option("--out", default=None, help="Archivo de salida para la firma (.sig)")
 @click.option("--message", "-m", is_flag=True, help="Firmar texto directo en vez de archivo")
-def sign(target, priv_key, out, message):
+def sign(target, priv_key, password, out, message):
     """
     Firma un archivo o mensaje con Ed25519.
 
     Ejemplos:
 
     \b
-      octacrypt sign documento.pdf --priv key_private.pem
-      octacrypt sign "hola mundo" --priv key_private.pem --message
+      octacrypt sign documento.pdf --priv key_private.pem --password secreto
+      octacrypt sign "hola mundo" --priv key_private.pem --password secreto --message
     """
     priv_path = Path(priv_key)
     if not priv_path.exists():
         raise click.ClickException(f"Clave privada no encontrada: {priv_path}")
 
     priv_pem = priv_path.read_bytes()
-    signer = Ed25519Signer(private_key_pem=priv_pem)
+    signer = Ed25519Signer(
+        private_key_pem=priv_pem,
+        private_key_password=password.encode() if password else None,
+    )
 
     if message:
         data = target.encode()

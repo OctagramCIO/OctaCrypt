@@ -22,7 +22,7 @@
 
 ---
 
-📖 **¿Primera vez usando OctaCrypt?** Lee la [Guía de Usuario](GUIA_DE_USUARIO.md)
+📖 **¿Primera vez usando OctaCrypt?** Lee la [Guía de Usuario](GUIA_DE_USUARIO.md) · [Guía paso a paso](GUIA_PASO_A_PASO.md)
 
 ## 🧭 Philosophy
 
