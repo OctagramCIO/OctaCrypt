@@ -6,11 +6,12 @@
 #   octacrypt pq-sign <file> --priv pqsign_private.pem [--out output]
 #   octacrypt pq-verify <file> --pub pqsign_public.pem --sig file.pq.sig
 
-import click
 from pathlib import Path
 
-from octacrypt.algorithms.mlkem import MLKEMCipher
+import click
+
 from octacrypt.algorithms.mldsa import MLDSASigner
+from octacrypt.algorithms.mlkem import MLKEMCipher
 
 
 @click.command("pq-encrypt")
@@ -37,8 +38,11 @@ def pq_encrypt(input_file, pub_key, out):
     pub_pem = pub_path.read_bytes()
     data = input_path.read_bytes()
 
-    cipher = MLKEMCipher(public_key_pem=pub_pem)
-    encrypted = cipher.encrypt(data)
+    try:
+        cipher = MLKEMCipher(public_key_pem=pub_pem)
+        encrypted = cipher.encrypt(data)
+    except Exception as e:
+        raise click.ClickException(f"No se pudo cifrar: {e}")
 
     output_path.write_bytes(encrypted)
 
@@ -79,11 +83,16 @@ def pq_decrypt(input_file, priv_key, out, password):
     password_bytes = password.encode() if password else None
     data = input_path.read_bytes()
 
-    cipher = MLKEMCipher(
-        private_key_pem=priv_pem,
-        private_key_password=password_bytes,
-    )
-    decrypted = cipher.decrypt(data)
+    try:
+        cipher = MLKEMCipher(
+            private_key_pem=priv_pem,
+            private_key_password=password_bytes,
+        )
+        decrypted = cipher.decrypt(data)
+    except Exception as e:
+        raise click.ClickException(
+            f"No se pudo descifrar. Verifica la clave y la contrasena. ({type(e).__name__})"
+        )
 
     output_path.write_bytes(decrypted)
 
@@ -115,10 +124,13 @@ def pq_sign(target, priv_key, out, message, password):
 
     priv_pem = priv_path.read_bytes()
     password_bytes = password.encode() if password else None
-    signer = MLDSASigner(
-        private_key_pem=priv_pem,
-        private_key_password=password_bytes,
-    )
+    try:
+        signer = MLDSASigner(
+            private_key_pem=priv_pem,
+            private_key_password=password_bytes,
+        )
+    except Exception as e:
+        raise click.ClickException(f"No se pudo cargar la clave privada: {e}")
 
     if message:
         data = target.encode()
@@ -169,7 +181,10 @@ def pq_verify(target, pub_key, sig_file, signature, message):
         data = target.encode()
         if not signature:
             raise click.ClickException("Usa --signature <hex> para verificar mensajes.")
-        sig_bytes = bytes.fromhex(signature)
+        try:
+            sig_bytes = bytes.fromhex(signature)
+        except ValueError:
+            raise click.ClickException("La firma en hex no es válida.")
     else:
         target_path = Path(target)
         if not target_path.exists():

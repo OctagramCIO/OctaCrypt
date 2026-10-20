@@ -18,7 +18,6 @@ OctaCrypt is a cryptographic tool. Contributions that touch cryptographic code r
 git clone https://github.com/OctagramCIO/OctaCrypt.git
 cd OctaCrypt
 pip install -e ".[dev]"
-pip install pytest ruff
 ```
 
 ---
@@ -30,7 +29,7 @@ pip install pytest ruff
 pytest tests/ -v
 
 # Specific module
-pytest tests/test_aes.py -v
+pytest tests/test_crypto_engine.py -v
 
 # With coverage
 pytest tests/ --cov=octacrypt --cov-report=term-missing

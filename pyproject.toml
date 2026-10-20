@@ -17,6 +17,13 @@ dependencies = [
     "questionary",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "ruff",
+]
+
 [project.scripts]
 octacrypt     = "octacrypt.cli.cli:cli"
 octacrypt-tui = "octacrypt.tui.tui:main"

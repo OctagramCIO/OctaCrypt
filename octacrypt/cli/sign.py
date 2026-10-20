@@ -1,7 +1,8 @@
 # octacrypt/cli/sign.py
 
-import click
 from pathlib import Path
+
+import click
 
 from octacrypt.algorithms.signer import Ed25519Signer
 
@@ -27,10 +28,13 @@ def sign(target, priv_key, password, out, message):
         raise click.ClickException(f"Clave privada no encontrada: {priv_path}")
 
     priv_pem = priv_path.read_bytes()
-    signer = Ed25519Signer(
-        private_key_pem=priv_pem,
-        private_key_password=password.encode() if password else None,
-    )
+    try:
+        signer = Ed25519Signer(
+            private_key_pem=priv_pem,
+            private_key_password=password.encode() if password else None,
+        )
+    except Exception as e:
+        raise click.ClickException(f"No se pudo cargar la clave privada: {e}")
 
     if message:
         data = target.encode()
@@ -81,7 +85,10 @@ def verify(target, pub_key, sig_file, signature, message):
         data = target.encode()
         if not signature:
             raise click.ClickException("Usa --signature <hex> para verificar mensajes.")
-        sig_bytes = bytes.fromhex(signature)
+        try:
+            sig_bytes = bytes.fromhex(signature)
+        except ValueError:
+            raise click.ClickException("La firma en hex no es válida.")
     else:
         target_path = Path(target)
         if not target_path.exists():

@@ -5,10 +5,10 @@ from pathlib import Path
 
 import questionary
 from questionary import Style
+from rich import box
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from rich import box
 from rich.text import Text
 
 console = Console()
@@ -91,10 +91,11 @@ def ask_directory(prompt: str) -> Path | None:
     return path
 
 
-def ask_password(prompt: str = "Contrasena") -> str | None:
+def ask_password(prompt: str = "Contrasena", required: bool = True) -> str | None:
     pw = questionary.password(prompt, style=STYLE).ask()
     if not pw:
-        error("La contrasena no puede estar vacia.")
+        if required:
+            error("La contrasena no puede estar vacia.")
         return None
     return pw
 
@@ -190,7 +191,7 @@ def menu_file_decrypt():
         priv_key = ask_file("Clave privada ML-KEM (.pem):")
         if not priv_key:
             return
-        pw = ask_password("Contrasena de la clave privada (Enter si no tiene):")
+        pw = ask_password("Contrasena de la clave privada (Enter si no tiene):", required=False)
         output_path = (
             input_file.with_suffix("") if input_file.suffix == ".pqenc"
             else input_file.with_suffix(".dec")
@@ -211,7 +212,7 @@ def menu_file_decrypt():
         priv_key = ask_file("Clave privada RSA (.pem):")
         if not priv_key:
             return
-        pw = ask_password("Contrasena de la clave privada (Enter si no tiene):")
+        pw = ask_password("Contrasena de la clave privada (Enter si no tiene):", required=False)
         output_path = (
             input_file.with_suffix("") if input_file.suffix == ".enc"
             else input_file.with_suffix(".dec")
@@ -393,7 +394,7 @@ def menu_message():
                 priv_key = ask_file("Clave privada ML-KEM (.pem):")
                 if not priv_key:
                     return
-                pw = ask_password("Contrasena de la clave privada (Enter si no tiene):")
+                pw = ask_password("Contrasena de la clave privada (Enter si no tiene):", required=False)
                 pw_bytes = pw.encode() if pw else None
                 plaintext = MessageCipher.decrypt_pq(
                     data, priv_key.read_bytes(), private_key_password=pw_bytes
@@ -402,7 +403,7 @@ def menu_message():
                 priv_key = ask_file("Clave privada RSA (.pem):")
                 if not priv_key:
                     return
-                pw = ask_password("Contrasena de la clave privada (Enter si no tiene):")
+                pw = ask_password("Contrasena de la clave privada (Enter si no tiene):", required=False)
                 pw_bytes = pw.encode() if pw else None
                 plaintext = MessageCipher.decrypt_hybrid(
                     data, priv_key.read_bytes(), private_key_password=pw_bytes
@@ -452,7 +453,7 @@ def menu_sign():
         priv_key = ask_file(f"Clave privada {label} (.pem):")
         if not priv_key:
             return
-        pw = ask_password("Contrasena de la clave privada (Enter si no tiene):")
+        pw = ask_password("Contrasena de la clave privada (Enter si no tiene):", required=False)
         try:
             pw_bytes = pw.encode() if pw else None
             signer = SignerClass(
@@ -524,10 +525,10 @@ def menu_keygen():
             return
 
     from octacrypt.utils.keygen import (
-        generate_rsa,
         generate_ed25519,
-        generate_mlkem,
         generate_mldsa,
+        generate_mlkem,
+        generate_rsa,
         save_keys,
     )
     try:
@@ -573,19 +574,19 @@ def menu_hash():
     if alg is None:
         return
 
-    from octacrypt.utils.hash import sha256, sha512, bcrypt_hash, scrypt_hash
+    from octacrypt.utils.hash import bcrypt_hash, scrypt_hash, sha256, sha512
     path = Path(target)
-    data = path.read_bytes() if path.exists() else target.encode()
 
     try:
+        data = path.read_bytes() if path.exists() else target.encode()
         if alg == "SHA-256":
             result = sha256(data)
         elif alg == "SHA-512":
             result = sha512(data)
         elif alg == "bcrypt":
-            result = bcrypt_hash(target)
+            result = bcrypt_hash(data)
         else:
-            result = scrypt_hash(target)
+            result = scrypt_hash(data)
         success(f"Hash [{alg}]:")
         console.print(Panel(result, box=box.ROUNDED))
     except Exception as e:

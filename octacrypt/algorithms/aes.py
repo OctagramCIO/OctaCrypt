@@ -1,5 +1,6 @@
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 import os
+
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 
 class AESAlgorithm:
@@ -15,6 +16,8 @@ class AESAlgorithm:
         return nonce + ciphertext  # se guarda todo junto
 
     def decrypt(self, data: bytes) -> bytes:
+        if len(data) < 12 + 16:  # nonce + tag mínimo
+            raise ValueError("Datos demasiado cortos para AES-256-GCM.")
         nonce = data[:12]
         ciphertext = data[12:]
         return self.aesgcm.decrypt(nonce, ciphertext, None)

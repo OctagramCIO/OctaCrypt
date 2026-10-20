@@ -255,7 +255,9 @@ Directory encryption processes files individually and creates a `.octadir` manif
 
 ### Message Encryption (`core/messenger.py`)
 
-Messages use a 10-byte algorithm prefix before the salt, allowing the decryption function to automatically select the correct algorithm:
+Symmetric messages use a 10-byte algorithm prefix before the salt, allowing the
+decryption function to automatically select the correct algorithm (AES-256-GCM
+or ChaCha20-Poly1305):
 
 ```
 [10 bytes: algorithm prefix]
@@ -265,7 +267,13 @@ Messages use a 10-byte algorithm prefix before the salt, allowing the decryption
 [optional: ||SIG|| separator + 64 bytes Ed25519 signature]
 ```
 
+> Note: messages produced by earlier versions (without the algorithm prefix)
+> are still supported and are decrypted with AES-256-GCM.
+
 The `||SIG||` separator is used when a message is signed. The signature covers the encrypted payload — meaning the signature proves authenticity of the ciphertext, not the plaintext.
+
+**Note:** if a signed message is decrypted without providing a verifier key,
+OctaCrypt raises an error instead of silently discarding the signature.
 
 ---
 

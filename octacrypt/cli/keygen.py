@@ -1,11 +1,12 @@
 # octacrypt/cli/keygen.py
 
 import click
+
 from octacrypt.utils.keygen import (
-    generate_rsa,
     generate_ed25519,
-    generate_mlkem,
     generate_mldsa,
+    generate_mlkem,
+    generate_rsa,
     save_keys,
 )
 

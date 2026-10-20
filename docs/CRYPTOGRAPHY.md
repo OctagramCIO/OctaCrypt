@@ -182,7 +182,7 @@ Used for: password storage verification (`octacrypt hash --bcrypt`)
 
 **Key properties:**
 - Adaptive — cost factor can be increased as hardware gets faster
-- Memory-hard — more resistant to GPU attacks than PBKDF2
+- Computationally expensive — more resistant to GPU attacks than PBKDF2
 - Built-in salt (embedded in the output string)
 
 ---
@@ -194,7 +194,7 @@ Used for: password storage verification (`octacrypt hash --bcrypt`)
 | N (CPU/memory cost) | 2^14 (16,384) |
 | r (block size) | 8 |
 | p (parallelization) | 1 |
-| Output | Variable (key derivation) |
+| Output | `scrypt$N$r$p$salt$key` string |
 | Standard | RFC 7914 |
 
 Used for: password hashing (`octacrypt hash --scrypt`)

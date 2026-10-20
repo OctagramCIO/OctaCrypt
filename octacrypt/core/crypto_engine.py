@@ -1,6 +1,7 @@
 from octacrypt.algorithms.aes import AESAlgorithm
 from octacrypt.algorithms.chacha import ChaChaAlgorithm
 
+
 class CryptoEngine:
     _SYMMETRIC = {
         "aes": AESAlgorithm,

@@ -1,18 +1,25 @@
 # octacrypt/cli/message.py
 
 import click
-from octacrypt.core.messenger import MessageCipher
+
 from octacrypt.algorithms.signer import Ed25519Signer
+from octacrypt.core.messenger import MessageCipher
 
 
 @click.command("msg-encrypt")
 @click.argument("message")
 @click.option("--password", "-p", default=None, help="Cifrado simétrico con password")
+@click.option(
+    "--alg",
+    default="aes",
+    type=click.Choice(["aes", "chacha20"]),
+    help="Algoritmo del modo simétrico: aes (default) o chacha20",
+)
 @click.option("--pub", "pub_key", default=None, help="Cifrado híbrido con clave pública RSA")
 @click.option("--pub-pq", "pub_pq_key", default=None, help="Cifrado post-cuántico con clave pública ML-KEM")
 @click.option("--sign-priv", default=None, help="Clave privada Ed25519 para firmar (opcional)")
 @click.option("--sign-password", default=None, help="Password de la clave de firma (si está cifrada)")
-def msg_encrypt(message, password, pub_key, pub_pq_key, sign_priv, sign_password):
+def msg_encrypt(message, password, alg, pub_key, pub_pq_key, sign_priv, sign_password):
     """
     Cifra un mensaje de texto.
 
@@ -21,6 +28,9 @@ def msg_encrypt(message, password, pub_key, pub_pq_key, sign_priv, sign_password
     \b
       Simétrico (password):
         octacrypt msg-encrypt "secreto" --password mipassword
+
+      Simétrico con ChaCha20:
+        octacrypt msg-encrypt "secreto" --password mipassword --alg chacha20
 
       Híbrido (RSA):
         octacrypt msg-encrypt "secreto" --pub key_public.pem
@@ -40,28 +50,39 @@ def msg_encrypt(message, password, pub_key, pub_pq_key, sign_priv, sign_password
         priv_path = Path(sign_priv)
         if not priv_path.exists():
             raise click.ClickException(f"Clave de firma no encontrada: {priv_path}")
-        signer = Ed25519Signer(
-            private_key_pem=priv_path.read_bytes(),
-            private_key_password=sign_password.encode() if sign_password else None,
-        )
+        try:
+            signer = Ed25519Signer(
+                private_key_pem=priv_path.read_bytes(),
+                private_key_password=sign_password.encode() if sign_password else None,
+            )
+        except Exception as e:
+            raise click.ClickException(f"No se pudo cargar la clave de firma: {e}")
 
-    if password:
-        encrypted = MessageCipher.encrypt_symmetric(message, password, signer=signer)
-        mode = "AES-256-GCM + PBKDF2"
-    elif pub_pq_key:
-        from pathlib import Path
-        pub_path = Path(pub_pq_key)
-        if not pub_path.exists():
-            raise click.ClickException(f"Clave pública no encontrada: {pub_path}")
-        encrypted = MessageCipher.encrypt_pq(message, pub_path.read_bytes(), signer=signer)
-        mode = "ML-KEM + AES-256-GCM (post-cuántico)"
-    else:
-        from pathlib import Path
-        pub_path = Path(pub_key)
-        if not pub_path.exists():
-            raise click.ClickException(f"Clave pública no encontrada: {pub_path}")
-        encrypted = MessageCipher.encrypt_hybrid(message, pub_path.read_bytes(), signer=signer)
-        mode = "RSA-OAEP + AES-256-GCM"
+    try:
+        if password:
+            encrypted = MessageCipher.encrypt_symmetric(
+                message, password, signer=signer, algorithm=alg
+            )
+            mode = "ChaCha20-Poly1305" if alg == "chacha20" else "AES-256-GCM"
+            mode += " + PBKDF2"
+        elif pub_pq_key:
+            from pathlib import Path
+            pub_path = Path(pub_pq_key)
+            if not pub_path.exists():
+                raise click.ClickException(f"Clave pública no encontrada: {pub_path}")
+            encrypted = MessageCipher.encrypt_pq(message, pub_path.read_bytes(), signer=signer)
+            mode = "ML-KEM + AES-256-GCM (post-cuántico)"
+        else:
+            from pathlib import Path
+            pub_path = Path(pub_key)
+            if not pub_path.exists():
+                raise click.ClickException(f"Clave pública no encontrada: {pub_path}")
+            encrypted = MessageCipher.encrypt_hybrid(message, pub_path.read_bytes(), signer=signer)
+            mode = "RSA-OAEP + AES-256-GCM"
+    except click.ClickException:
+        raise
+    except Exception as e:
+        raise click.ClickException(f"No se pudo cifrar: {e}")
 
     b64 = MessageCipher.to_base64(encrypted)
 
@@ -134,8 +155,12 @@ def msg_decrypt(ciphertext, password, priv_key, priv_pq_key, priv_password, veri
                 private_key_password=private_password,
                 verifier=verifier,
             )
-    except ValueError as e:
+    except (ValueError, TypeError) as e:
         raise click.ClickException(str(e))
+    except Exception as e:
+        raise click.ClickException(
+            f"No se pudo descifrar. Verifica la clave y la contrasena. ({type(e).__name__})"
+        )
 
     click.echo("✅ Mensaje descifrado:")
     click.echo(f"\n{plaintext.decode()}")

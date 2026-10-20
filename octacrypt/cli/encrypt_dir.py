@@ -1,8 +1,14 @@
 # octacrypt/cli/encrypt_dir.py
 
-import click
 from pathlib import Path
-from octacrypt.core.dir_crypto import encrypt_directory, decrypt_directory, get_directory_info
+
+import click
+
+from octacrypt.core.dir_crypto import (
+    decrypt_directory,
+    encrypt_directory,
+    get_directory_info,
+)
 
 
 def _fmt(n: int) -> str:

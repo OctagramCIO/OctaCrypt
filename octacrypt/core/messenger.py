@@ -4,7 +4,7 @@
 # No requiere archivos — ideal para mensajes, strings, payloads.
 #
 # Modos:
-#   - Simétrico: AES-256-GCM con KDF (password → key)
+#   - Simétrico: AES-256-GCM o ChaCha20-Poly1305 con KDF (password → key)
 #   - Híbrido:   RSA-OAEP + AES-256-GCM (clave pública/privada)
 #   - Post-cuántico: ML-KEM + AES-256-GCM (clave pública/privada)
 #   - Con firma: cifrado + firma Ed25519 opcional
@@ -12,6 +12,7 @@
 import base64
 
 from octacrypt.algorithms.aes import AESAlgorithm
+from octacrypt.algorithms.chacha import ChaChaAlgorithm
 from octacrypt.algorithms.hybrid import HybridCipher
 from octacrypt.algorithms.mlkem import MLKEMCipher
 from octacrypt.algorithms.signer import Ed25519Signer
@@ -20,6 +21,40 @@ from octacrypt.utils.kdf import derive_key, generate_salt
 # Separador interno para mensajes firmados
 _SIG_SEPARATOR = b"||SIG||"
 SALT_SIZE = 16
+ALGO_PREFIX_SIZE = 10
+
+_SYMMETRIC_ALGORITHMS = ("aes", "chacha20")
+
+
+def _make_cipher(algorithm: str, key: bytes):
+    if algorithm == "aes":
+        return AESAlgorithm(key)
+    if algorithm == "chacha20":
+        return ChaChaAlgorithm(key)
+    raise ValueError(
+        f"Algoritmo no soportado: '{algorithm}'. Disponibles: {list(_SYMMETRIC_ALGORITHMS)}"
+    )
+
+
+def _split_signed_payload(data: bytes, verifier: Ed25519Signer | None) -> bytes:
+    """
+    Separa la firma Ed25519 del payload si el mensaje está firmado.
+
+    Si el mensaje lleva firma y no se proporciona verificador, lanza
+    ValueError: nunca se debe ignorar una firma en silencio.
+    """
+    if _SIG_SEPARATOR not in data:
+        return data
+
+    payload, signature = data.split(_SIG_SEPARATOR, 1)
+    if verifier is None:
+        raise ValueError(
+            "El mensaje está firmado pero no se proporcionó clave pública "
+            "de verificación. Usa --verify-pub (CLI) para verificar la firma."
+        )
+    if not verifier.verify(payload, signature):
+        raise ValueError("❌ Firma inválida — mensaje comprometido.")
+    return payload
 
 
 class MessageCipher:
@@ -27,7 +62,7 @@ class MessageCipher:
     Cifrado de mensajes de texto o bytes.
 
     Soporta:
-      - Modo simétrico (password)
+      - Modo simétrico (password): AES-256-GCM o ChaCha20-Poly1305
       - Modo híbrido (RSA)
       - Modo post-cuántico (ML-KEM)
       - Firma Ed25519 opcional en todos los modos
@@ -37,7 +72,7 @@ class MessageCipher:
     """
 
     # ------------------------------------------------------------------
-    # Simétrico: password → AES-256-GCM
+    # Simétrico: password → AES-256-GCM / ChaCha20-Poly1305
     # ------------------------------------------------------------------
 
     @staticmethod
@@ -45,27 +80,30 @@ class MessageCipher:
         message: bytes | str,
         password: str,
         signer: Ed25519Signer | None = None,
+        algorithm: str = "aes",
     ) -> bytes:
         """
-        Cifra un mensaje con AES-256-GCM derivando la key desde un password.
+        Cifra un mensaje derivando la key desde un password.
 
-        Formato: [16B salt][12B nonce][ciphertext+tag]
+        Formato: [10B prefijo algoritmo][16B salt][12B nonce][ciphertext+tag]
         Si signer: [datos_cifrados][_SIG_SEPARATOR][64B firma]
 
         Args:
-            message:  Texto o bytes a cifrar.
-            password: Contraseña (se deriva con PBKDF2).
-            signer:   Ed25519Signer opcional para firmar el ciphertext.
+            message:   Texto o bytes a cifrar.
+            password:  Contraseña (se deriva con PBKDF2).
+            signer:    Ed25519Signer opcional para firmar el ciphertext.
+            algorithm: "aes" (AES-256-GCM) o "chacha20" (ChaCha20-Poly1305).
         """
         if isinstance(message, str):
             message = message.encode()
 
         salt = generate_salt()
         key = derive_key(password, salt)
-        cipher = AESAlgorithm(key)
+        cipher = _make_cipher(algorithm, key)
         encrypted = cipher.encrypt(message)
 
-        payload = salt + encrypted
+        algo_prefix = algorithm.encode().ljust(ALGO_PREFIX_SIZE, b"\x00")
+        payload = algo_prefix + salt + encrypted
 
         if signer:
             signature = signer.sign(payload)
@@ -82,28 +120,36 @@ class MessageCipher:
         """
         Descifra un mensaje cifrado con encrypt_symmetric.
 
+        El algoritmo se determina automáticamente desde el prefijo del
+        mensaje (formato v0.4+). Los mensajes en formato antiguo
+        ([16B salt][nonce][ciphertext], sin prefijo) se descifran con AES.
+
         Args:
             data:     Bytes cifrados.
             password: Contraseña original.
             verifier: Ed25519Signer con clave pública para verificar firma.
 
         Raises:
-            ValueError: Si la firma es inválida.
+            ValueError: Si la firma es inválida o falta el verificador.
         """
-        # Separar firma si existe
-        if _SIG_SEPARATOR in data:
-            payload, signature = data.split(_SIG_SEPARATOR, 1)
-            if verifier:
-                if not verifier.verify(payload, signature):
-                    raise ValueError("❌ Firma inválida — mensaje comprometido.")
-        else:
-            payload = data
+        payload = _split_signed_payload(data, verifier)
 
-        salt = payload[:SALT_SIZE]
-        encrypted = payload[SALT_SIZE:]
+        prefix = payload[:ALGO_PREFIX_SIZE].rstrip(b"\x00").decode(errors="replace")
+        if prefix in _SYMMETRIC_ALGORITHMS:
+            algorithm = prefix
+            salt = payload[ALGO_PREFIX_SIZE : ALGO_PREFIX_SIZE + SALT_SIZE]
+            encrypted = payload[ALGO_PREFIX_SIZE + SALT_SIZE :]
+        else:
+            # Compatibilidad con formato antiguo: sin prefijo, siempre AES
+            algorithm = "aes"
+            salt = payload[:SALT_SIZE]
+            encrypted = payload[SALT_SIZE:]
+
+        if len(salt) != SALT_SIZE:
+            raise ValueError("Mensaje corrupto: salt inválido.")
 
         key = derive_key(password, salt)
-        cipher = AESAlgorithm(key)
+        cipher = _make_cipher(algorithm, key)
         return cipher.decrypt(encrypted)
 
     # ------------------------------------------------------------------
@@ -153,15 +199,9 @@ class MessageCipher:
             verifier:             Ed25519Signer con clave pública para verificar.
 
         Raises:
-            ValueError: Si la firma es inválida.
+            ValueError: Si la firma es inválida o falta el verificador.
         """
-        if _SIG_SEPARATOR in data:
-            payload, signature = data.split(_SIG_SEPARATOR, 1)
-            if verifier:
-                if not verifier.verify(payload, signature):
-                    raise ValueError("❌ Firma inválida — mensaje comprometido.")
-        else:
-            payload = data
+        payload = _split_signed_payload(data, verifier)
 
         cipher = HybridCipher(
             private_key_pem=private_key_pem,
@@ -216,15 +256,9 @@ class MessageCipher:
             verifier:             Ed25519Signer con clave pública para verificar.
 
         Raises:
-            ValueError: Si la firma es inválida.
+            ValueError: Si la firma es inválida o falta el verificador.
         """
-        if _SIG_SEPARATOR in data:
-            payload, signature = data.split(_SIG_SEPARATOR, 1)
-            if verifier:
-                if not verifier.verify(payload, signature):
-                    raise ValueError("❌ Firma inválida — mensaje comprometido.")
-        else:
-            payload = data
+        payload = _split_signed_payload(data, verifier)
 
         cipher = MLKEMCipher(
             private_key_pem=private_key_pem,

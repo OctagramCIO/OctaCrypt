@@ -207,8 +207,8 @@ octacrypt encrypt document.pdf --alg hybrid --pub recipient_public.pem
 
 # Decrypt
 octacrypt decrypt document.pdf.enc --key mypassword
-octacrypt decrypt document.pdf.enc --alg chacha20 --key mypassword
-octacrypt decrypt document.pdf.enc --alg hybrid --priv mykey_private.pem
+octacrypt decrypt document.pdf.enc --key mypassword --alg chacha20
+octacrypt decrypt document.pdf.enc --alg hybrid --priv mykey_private.pem --password mypassword
 ```
 
 ---
@@ -260,7 +260,7 @@ octacrypt msg-encrypt "top secret" --pub recipient_public.pem
 octacrypt msg-encrypt "top secret" --pub-pq pqenc_public.pem
 
 # With Ed25519 signature
-octacrypt msg-encrypt "top secret" --password pw --sign-priv signkey_private.pem
+octacrypt msg-encrypt "top secret" --password pw --sign-priv signkey_private.pem --sign-password <signkey_pw>
 
 # Decrypt
 octacrypt msg-decrypt "<base64>" --password mypassword
@@ -278,13 +278,13 @@ octacrypt msg-decrypt "<base64>" --password pw --verify-pub signkey_public.pem
 
 ```bash
 # Sign a file
-octacrypt sign document.pdf --priv signkey_private.pem
+octacrypt sign document.pdf --priv signkey_private.pem --password <signkey_pw>
 
 # Verify signature
 octacrypt verify document.pdf --pub signkey_public.pem --sig document.pdf.sig
 
 # Sign a message
-octacrypt sign "hello octagram" --priv signkey_private.pem --message
+octacrypt sign "hello octagram" --priv signkey_private.pem --password <signkey_pw> --message
 
 # Verify a message
 octacrypt verify "hello octagram" --pub signkey_public.pem --signature <hex> --message

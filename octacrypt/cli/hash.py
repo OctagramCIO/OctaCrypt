@@ -1,13 +1,16 @@
-import click
 from pathlib import Path
+
+import click
+
 from octacrypt.utils.hash import (
-    sha256,
-    sha512,
     bcrypt_hash,
     bcrypt_verify,
     scrypt_hash,
     scrypt_verify,
+    sha256,
+    sha512,
 )
+
 
 @click.command()
 @click.argument("target")
@@ -28,6 +31,9 @@ def hash(target, alg, bcrypt, scrypt, verify):
     else:
         data = target.encode()
 
+    if verify and not (bcrypt or scrypt):
+        raise click.UsageError("--verify solo aplica con --bcrypt o --scrypt.")
+
     if alg == "sha256":
         click.echo(sha256(data))
         return
@@ -38,16 +44,16 @@ def hash(target, alg, bcrypt, scrypt, verify):
 
     if bcrypt:
         if verify:
-            click.echo(bcrypt_verify(target, verify))
+            click.echo(bcrypt_verify(data, verify))
         else:
-            click.echo(bcrypt_hash(target))
+            click.echo(bcrypt_hash(data))
         return
 
     if scrypt:
         if verify:
-            click.echo(scrypt_verify(target, verify))
+            click.echo(scrypt_verify(data, verify))
         else:
-            click.echo(scrypt_hash(target))
+            click.echo(scrypt_hash(data))
         return
 
     raise click.UsageError("Select a hash algorithm")

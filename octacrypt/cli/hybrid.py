@@ -4,8 +4,9 @@
 #   octacrypt hybrid-encrypt <file> --pub key_public.pem [--out output]
 #   octacrypt hybrid-decrypt <file> --priv key_private.pem [--out output] [--password ...]
 
-import click
 from pathlib import Path
+
+import click
 
 from octacrypt.algorithms.hybrid import HybridCipher
 
@@ -36,8 +37,11 @@ def hybrid_encrypt(input_file, pub_key, out):
     data = input_path.read_bytes()
 
     # Cifrar
-    cipher = HybridCipher(public_key_pem=pub_pem)
-    encrypted = cipher.encrypt(data)
+    try:
+        cipher = HybridCipher(public_key_pem=pub_pem)
+        encrypted = cipher.encrypt(data)
+    except Exception as e:
+        raise click.ClickException(f"No se pudo cifrar: {e}")
 
     output_path.write_bytes(encrypted)
 
@@ -81,11 +85,16 @@ def hybrid_decrypt(input_file, priv_key, out, password):
     data = input_path.read_bytes()
 
     # Descifrar
-    cipher = HybridCipher(
-        private_key_pem=priv_pem,
-        private_key_password=password_bytes,
-    )
-    decrypted = cipher.decrypt(data)
+    try:
+        cipher = HybridCipher(
+            private_key_pem=priv_pem,
+            private_key_password=password_bytes,
+        )
+        decrypted = cipher.decrypt(data)
+    except Exception as e:
+        raise click.ClickException(
+            f"No se pudo descifrar. Verifica la clave y la contrasena. ({type(e).__name__})"
+        )
 
     output_path.write_bytes(decrypted)
 

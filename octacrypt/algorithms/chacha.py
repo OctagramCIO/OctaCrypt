@@ -1,5 +1,7 @@
 import os
+
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
+
 
 class ChaChaAlgorithm:
     KEY_SIZE = 32

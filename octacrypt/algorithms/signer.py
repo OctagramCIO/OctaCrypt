@@ -9,18 +9,18 @@
 #
 # Formato de firma: raw bytes (64 bytes)
 
+from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import (
     Ed25519PrivateKey,
 )
 from cryptography.hazmat.primitives.serialization import (
-    load_pem_private_key,
-    load_pem_public_key,
     Encoding,
+    NoEncryption,
     PrivateFormat,
     PublicFormat,
-    NoEncryption,
+    load_pem_private_key,
+    load_pem_public_key,
 )
-from cryptography.exceptions import InvalidSignature
 
 
 class Ed25519Signer:

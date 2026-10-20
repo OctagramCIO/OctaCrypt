@@ -12,12 +12,12 @@
 import os
 import struct
 
-from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.serialization import (
-    load_pem_public_key,
     load_pem_private_key,
+    load_pem_public_key,
 )
 
 
@@ -122,8 +122,12 @@ class HybridCipher:
             raise TypeError("data debe ser bytes.")
 
         # 1. Leer longitud de la session key cifrada
+        if len(data) < 2:
+            raise ValueError("Datos corruptos: blob demasiado corto.")
         key_len = struct.unpack(">H", data[:2])[0]
         offset = 2
+        if len(data) < 2 + key_len + self.NONCE_SIZE + 16:
+            raise ValueError("Datos corruptos: longitud inesperada del blob híbrido.")
 
         # 2. Extraer session key cifrada
         encrypted_session_key = data[offset : offset + key_len]

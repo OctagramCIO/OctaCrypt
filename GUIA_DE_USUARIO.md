@@ -40,7 +40,6 @@ La TUI es la forma más fácil de usar OctaCrypt. Tiene menús interactivos - so
 ```bash
 # Si descargaste el ejecutable
 .\octacrypt-tui.exe          # Windows
-./octacrypt-tui              # Linux / macOS
 
 # Si instalaste desde código fuente
 octacrypt-tui
@@ -205,7 +204,7 @@ octacrypt decrypt documento.pdf.enc --alg hybrid --priv mikey_private.pem
 
 ```bash
 # Firmar
-octacrypt sign documento.pdf --priv signkey_private.pem
+octacrypt sign documento.pdf --priv signkey_private.pem --password tuPassword
 
 # Se crea documento.pdf.sig — envía ambos archivos al destinatario
 

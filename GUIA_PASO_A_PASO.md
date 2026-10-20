@@ -85,7 +85,7 @@ octacrypt keygen --type mldsa  --out dsa  --prompt-password
 
 ## 3️⃣ Cifrar y descifrar archivos
 
-### Opción A — Con contraseña (AES-256, para tu propio uso)
+### Opción A — Con contraseña (AES-256-GCM, para tu propio uso)
 
 ```bash
 octacrypt encrypt doc.pdf --key miClave          # crea doc.pdf.enc
@@ -191,7 +191,7 @@ También está `--scrypt`. En `bcrypt`/`scrypt` el `--verify` compara contra el 
 | Extensión | Generada por | Se descifra con |
 |---|---|---|
 | `.enc` | `encrypt` / `encrypt-dir` | `decrypt` / `decrypt-dir` |
-| `.henc` | `hybrid-encrypt` | `hybrid-decrypt` |
+| `.henc` | `hybrid-encrypt` (y TUI híbrido) | `hybrid-decrypt` |
 | `.pqenc` | `pq-encrypt` | `pq-decrypt` |
 | `.sig` | `sign` | `verify` |
 | `.pqsig` | `pq-sign` | `pq-verify` |

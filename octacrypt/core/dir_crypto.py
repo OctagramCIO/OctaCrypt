@@ -1,11 +1,32 @@
 # octacrypt/core/dir_crypto.py
 
 import json
-from pathlib import Path
 from datetime import datetime, timezone
-from octacrypt.core.crypto import encrypt_file, decrypt_file
+from pathlib import Path
+
+from octacrypt.core.crypto import decrypt_file, encrypt_file
 
 MANIFEST_NAME = ".octadir"
+
+
+def _safe_join(base: Path, relative: str, field: str) -> Path:
+    """
+    Une una ruta relativa del manifiesto con base, garantizando que
+    el resultado quede dentro de base (previene path traversal).
+    """
+    rel = Path(relative)
+    if rel.is_absolute() or ".." in rel.parts:
+        raise ValueError(
+            f"Ruta inválida en manifiesto ('{field}'): '{relative}'. "
+            "El archivo puede haber sido manipulado."
+        )
+    resolved = (base / rel).resolve()
+    if not resolved.is_relative_to(base.resolve()):
+        raise ValueError(
+            f"Ruta inválida en manifiesto ('{field}'): '{relative}'. "
+            "El archivo puede haber sido manipulado."
+        )
+    return resolved
 
 
 def encrypt_directory(input_dir, output_dir, key: str, algorithm: str = "aes"):
@@ -62,8 +83,18 @@ def decrypt_directory(input_dir, output_dir, key: str):
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 
+    files = manifest.get("files")
+    if not isinstance(files, list):
+        raise ValueError("Manifiesto corrupto: falta la lista de archivos.")
+
     if output_dir is None:
         original_name = manifest.get("original_dir", input_dir.name.removesuffix(".enc"))
+        if (
+            not isinstance(original_name, str)
+            or not original_name
+            or Path(original_name).name != original_name
+        ):
+            original_name = input_dir.name.removesuffix(".enc")
         output_dir = input_dir.parent / original_name
     else:
         output_dir = Path(output_dir)
@@ -72,9 +103,9 @@ def decrypt_directory(input_dir, output_dir, key: str):
     files_decrypted = 0
     total_bytes = 0
 
-    for entry in manifest["files"]:
-        enc_file = input_dir / entry["encrypted"]
-        out_file = output_dir / entry["original"]
+    for entry in files:
+        enc_file = _safe_join(input_dir, entry["encrypted"], "encrypted")
+        out_file = _safe_join(output_dir, entry["original"], "original")
         if not enc_file.exists():
             raise FileNotFoundError(f"Archivo cifrado no encontrado: {enc_file}")
         out_file.parent.mkdir(parents=True, exist_ok=True)

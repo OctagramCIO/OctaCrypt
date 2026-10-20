@@ -1,10 +1,9 @@
 # octacrypt/utils/keygen.py
 
-from cryptography.hazmat.primitives.asymmetric import rsa, ed25519
 from cryptography.hazmat.primitives import serialization
 
 # Importación de los submódulos post-cuánticos (no re-exportados en `asymmetric/__init__`).
-from cryptography.hazmat.primitives.asymmetric import mlkem, mldsa
+from cryptography.hazmat.primitives.asymmetric import ed25519, mldsa, mlkem, rsa
 
 
 def generate_rsa(bits: int = 2048):

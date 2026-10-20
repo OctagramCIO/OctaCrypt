@@ -8,18 +8,18 @@
 #
 # Formato de firma: bytes crudos de longitud variable según la variante.
 
-from cryptography.hazmat.primitives.serialization import (
-    load_pem_private_key,
-    load_pem_public_key,
-    Encoding,
-    PrivateFormat,
-    PublicFormat,
-    NoEncryption,
-)
 from cryptography.exceptions import InvalidSignature
 
 # Importación del submódulo (no re-exportado en `asymmetric/__init__`).
 from cryptography.hazmat.primitives.asymmetric import mldsa
+from cryptography.hazmat.primitives.serialization import (
+    Encoding,
+    NoEncryption,
+    PrivateFormat,
+    PublicFormat,
+    load_pem_private_key,
+    load_pem_public_key,
+)
 
 # Variantes oficiales de ML-DSA (NIST FIPS 204).
 # ML-DSA-44: ~128 bits | ML-DSA-65: ~192 bits (recomendado)

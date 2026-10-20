@@ -17,14 +17,13 @@
 import os
 import struct
 
+# Importación del submódulo (no re-exportado en `asymmetric/__init__`).
+from cryptography.hazmat.primitives.asymmetric import mlkem
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.serialization import (
     load_pem_private_key,
     load_pem_public_key,
 )
-
-# Importación del submódulo (no re-exportado en `asymmetric/__init__`).
-from cryptography.hazmat.primitives.asymmetric import mlkem
 
 # Variantes oficiales de ML-KEM (NIST FIPS 203).
 # ML-KEM-768: recomendado por NIST para uso general (~192 bits de seguridad)

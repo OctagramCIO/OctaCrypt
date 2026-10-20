@@ -2,15 +2,15 @@
 
 import click
 
-from .encrypt import encrypt
 from .decrypt import decrypt
+from .encrypt import encrypt
+from .encrypt_dir import decrypt_dir, dir_info, encrypt_dir
 from .hash import hash
+from .hybrid import hybrid_decrypt, hybrid_encrypt
 from .keygen import keygen
-from .hybrid import hybrid_encrypt, hybrid_decrypt
+from .message import msg_decrypt, msg_encrypt
+from .pq import pq_decrypt, pq_encrypt, pq_sign, pq_verify
 from .sign import sign, verify
-from .pq import pq_encrypt, pq_decrypt, pq_sign, pq_verify
-from .message import msg_encrypt, msg_decrypt
-from .encrypt_dir import encrypt_dir, decrypt_dir, dir_info
 
 
 @click.group()
@@ -27,7 +27,8 @@ def cli():
 
     \b
     Comandos disponibles:
-      encrypt / decrypt     → Cifrado de archivos (AES-256-GCM)
+      encrypt / decrypt     → Cifrado de archivos (AES-256-GCM / ChaCha20-Poly1305)
+      encrypt-dir / decrypt-dir / dir-info → Cifrado de directorios
       hybrid-encrypt / hybrid-decrypt → Cifrado híbrido RSA + AES
       pq-encrypt / pq-decrypt         → Cifrado post-cuántico ML-KEM + AES
       msg-encrypt / msg-decrypt       → Cifrado de mensajes
@@ -36,7 +37,6 @@ def cli():
       keygen                → Generación de claves
       hash                  → Hashing (SHA256, SHA512, bcrypt, scrypt)
     """
-    pass
 
 
 cli.add_command(encrypt_dir)

@@ -1,7 +1,9 @@
 # octacrypt/cli/encrypt.py
 
-import click
 from pathlib import Path
+
+import click
+
 from octacrypt.core.crypto import encrypt_file
 
 
