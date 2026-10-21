@@ -139,3 +139,6 @@ class Ed25519Signer:
             return True
         except InvalidSignature:
             return False
+        except (ValueError, TypeError):
+            # Firma con longitud/formatos inválidos: se trata como no válida.
+            return False

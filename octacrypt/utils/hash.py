@@ -49,6 +49,19 @@ _SCRYPT_P = 1
 _SCRYPT_SALT_SIZE = 16
 # Longitud fija del salt del formato antiguo (bcrypt.gensalt() = 29 bytes)
 _LEGACY_SCRYPT_SALT_SIZE = 29
+# Límites superiores para evitar DoS por parámetros maliciosos en el hash almacenado.
+_SCRYPT_MAX_N = 2**20
+_SCRYPT_MAX_R = 32
+_SCRYPT_MAX_P = 16
+
+
+def _scrypt_params_valid(n: int, r: int, p: int) -> bool:
+    return (
+        1 < n <= _SCRYPT_MAX_N
+        and n & (n - 1) == 0  # n debe ser potencia de 2
+        and 1 <= r <= _SCRYPT_MAX_R
+        and 1 <= p <= _SCRYPT_MAX_P
+    )
 
 
 def scrypt_hash(password: str | bytes) -> str:
@@ -77,6 +90,10 @@ def scrypt_verify(password: str | bytes, stored: str) -> bool:
             salt = bytes.fromhex(parts[4])
             expected = bytes.fromhex(parts[5])
         except ValueError:
+            return False
+        if not _scrypt_params_valid(n, r, p):
+            return False
+        if not salt or not expected:
             return False
     else:
         # Formato legado: salt bcrypt (29 bytes) + key, todo en hex

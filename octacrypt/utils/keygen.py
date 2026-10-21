@@ -1,9 +1,32 @@
 # octacrypt/utils/keygen.py
 
+import os
+
 from cryptography.hazmat.primitives import serialization
 
 # Importación de los submódulos post-cuánticos (no re-exportados en `asymmetric/__init__`).
 from cryptography.hazmat.primitives.asymmetric import ed25519, mldsa, mlkem, rsa
+
+
+def _write_private_file(path: str, data: bytes) -> None:
+    """
+    Escribe un archivo sensible creándolo con permisos restrictivos (0600 en
+    sistemas POSIX) para que la clave privada no sea legible por otros usuarios.
+    """
+    parent = os.path.dirname(os.path.abspath(path))
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    fd = os.open(path, flags, 0o600)
+    try:
+        os.write(fd, data)
+    finally:
+        os.close(fd)
+    # Garantiza permisos correctos aunque el archivo ya existiera.
+    if os.name == "posix":
+        os.chmod(path, 0o600)
 
 
 def generate_rsa(bits: int = 2048):
@@ -48,6 +71,8 @@ def save_keys(private_key, name: str, password: str | None = None):
 
     Si se provee password, la clave privada se cifra con AES-256-CBC (BestAvailableEncryption).
     La clave publica NUNCA se cifra.
+
+    La clave privada se crea con permisos restrictivos (0600 en POSIX).
     """
     public_key = private_key.public_key()
 
@@ -60,22 +85,20 @@ def save_keys(private_key, name: str, password: str | None = None):
     else:
         encryption = serialization.NoEncryption()
 
-    with open(private_path, "wb") as f:
-        f.write(
-            private_key.private_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PrivateFormat.PKCS8,
-                encryption_algorithm=encryption,
-            )
-        )
+    private_bytes = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=encryption,
+    )
+    public_bytes = public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+
+    _write_private_file(private_path, private_bytes)
 
     with open(public_path, "wb") as f:
-        f.write(
-            public_key.public_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PublicFormat.SubjectPublicKeyInfo,
-            )
-        )
+        f.write(public_bytes)
 
     return private_path, public_path
 

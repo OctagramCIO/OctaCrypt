@@ -185,3 +185,60 @@ def test_cli_msg_encrypt_chacha20_roundtrip():
     r = runner.invoke(cli, ["msg-decrypt", b64, "--password", "pw"])
     assert r.exit_code == 0, r.output
     assert "hola mundo" in r.output
+
+
+# ─── Endurecimiento de seguridad (v0.4.x) ────────────────
+
+def test_save_keys_private_is_owner_only(tmp_path, monkeypatch):
+    """La clave privada debe crearse con permisos 0600 en POSIX."""
+    import os
+
+    from octacrypt.utils.keygen import generate_ed25519, save_keys
+
+    monkeypatch.chdir(tmp_path)
+    priv, _ = save_keys(generate_ed25519(), "mykey")
+    assert os.path.exists(priv)
+    if os.name == "posix":
+        mode = os.stat(priv).st_mode & 0o777
+        assert mode == 0o600, oct(mode)
+
+
+def test_scrypt_verify_rejects_absurd_params():
+    """Parámetros n/r/p fuera de rango no deben provocar cómputo excesivo (DoS)."""
+    # n desmesurado -> rechazado sin intentar derivar
+    evil = "scrypt$1073741824$8$1$" + "00" * 16 + "$" + "00" * 32
+    assert scrypt_verify("x", evil) is False
+    # n no potencia de 2 -> rechazado
+    bad_n = "scrypt$1000$8$1$" + "00" * 16 + "$" + "00" * 32
+    assert scrypt_verify("x", bad_n) is False
+    # r/p fuera de rango -> rechazado
+    bad_r = "scrypt$16384$9999$1$" + "00" * 16 + "$" + "00" * 32
+    assert scrypt_verify("x", bad_r) is False
+
+
+def test_ed25519_verify_malformed_signature_returns_false():
+    """Una firma con longitud inválida devuelve False, no lanza excepción."""
+    _, pub = Ed25519Signer.generate_keypair()
+    verifier = Ed25519Signer(public_key_pem=pub)
+    assert verifier.verify(b"datos", b"firma-corta") is False
+
+
+def test_decrypt_file_rejects_unknown_algo_prefix(tmp_path):
+    """Un archivo con prefijo de algoritmo corrupto debe fallar con claridad."""
+    from octacrypt.core.crypto import decrypt_file
+
+    bad = tmp_path / "bad.enc"
+    # prefijo desconocido (10B) + salt(16B) + algo de "ciphertext"
+    bad.write_bytes(b"evilalgo\x00\x00" + b"\x00" * 16 + b"xxxx")
+    with pytest.raises(ValueError, match="algoritmo desconocido"):
+        decrypt_file(bad, tmp_path / "out.bin", key="pw")
+
+
+def test_decrypt_file_roundtrip_still_works(tmp_path):
+    from octacrypt.core.crypto import decrypt_file, encrypt_file
+
+    src = tmp_path / "d.txt"
+    src.write_bytes(b"contenido valido")
+    enc = encrypt_file(src, tmp_path / "d.txt.enc", key="pw", algorithm="chacha20")
+    out = decrypt_file(enc, tmp_path / "d.out", key="pw")
+    assert out.read_bytes() == b"contenido valido"
