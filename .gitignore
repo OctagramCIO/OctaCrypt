@@ -140,3 +140,9 @@ __marimo__/
 # Local test keys
 test_*_private.pem
 test_*_public.pem
+
+# ================================
+# Rust / native module
+# ================================
+native/target/
+**/*.rs.bk

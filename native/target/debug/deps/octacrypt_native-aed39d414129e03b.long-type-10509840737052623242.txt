@@ -1,1 +1,0 @@
-<<P as ParameterSet>::Du as module_lattice::encoding::VectorEncodingSize<<P as ParameterSet>::K>>::EncodedVectorSize
