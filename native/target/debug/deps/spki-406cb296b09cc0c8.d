@@ -1,0 +1,10 @@
+C:\Users\edidi\OneDrive\Documentos\GitHub\OctagramCIO\OctaCrypt\native\target\debug\deps\spki-406cb296b09cc0c8.d: C:\Users\edidi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spki-0.8.1\src\lib.rs C:\Users\edidi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spki-0.8.1\src\algorithm.rs C:\Users\edidi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spki-0.8.1\src\error.rs C:\Users\edidi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spki-0.8.1\src\spki.rs C:\Users\edidi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spki-0.8.1\src\traits.rs C:\Users\edidi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spki-0.8.1\src\../README.md
+
+C:\Users\edidi\OneDrive\Documentos\GitHub\OctagramCIO\OctaCrypt\native\target\debug\deps\libspki-406cb296b09cc0c8.rmeta: C:\Users\edidi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spki-0.8.1\src\lib.rs C:\Users\edidi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spki-0.8.1\src\algorithm.rs C:\Users\edidi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spki-0.8.1\src\error.rs C:\Users\edidi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spki-0.8.1\src\spki.rs C:\Users\edidi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spki-0.8.1\src\traits.rs C:\Users\edidi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spki-0.8.1\src\../README.md
+
+C:\Users\edidi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spki-0.8.1\src\lib.rs:
+C:\Users\edidi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spki-0.8.1\src\algorithm.rs:
+C:\Users\edidi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spki-0.8.1\src\error.rs:
+C:\Users\edidi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spki-0.8.1\src\spki.rs:
+C:\Users\edidi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spki-0.8.1\src\traits.rs:
+C:\Users\edidi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\spki-0.8.1\src\../README.md:

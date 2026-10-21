@@ -1,0 +1,27 @@
+[package]
+name = "octacrypt_native"
+version = "0.5.0"
+edition = "2021"
+rust-version = "1.85"
+description = "Núcleo criptográfico nativo de OctaCrypt (Rust + PyO3)"
+license = "MIT OR Apache-2.0"
+
+[lib]
+name = "octacrypt_native"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+pyo3 = { version = "0.30", features = ["extension-module", "abi3-py310"] }
+aes-gcm = { version = "0.11", features = ["getrandom"] }
+chacha20poly1305 = { version = "0.11", features = ["getrandom"] }
+ml-kem = { version = "0.3", features = ["getrandom"] }
+ml-dsa = { version = "0.1", features = ["getrandom"] }
+ed25519-dalek = { version = "3.0", features = ["rand_core"] }
+getrandom = "0.4"
+zeroize = "1"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = true
